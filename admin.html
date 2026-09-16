@@ -1,16 +1,50 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Painel Lophera</title><link rel="stylesheet" href="style.css"></head><body class="admin" onload="adminBoot()">
-<div class="admin-head"><div><img src="assets/logo.svg" style="width:130px;filter:brightness(0) invert(1)"></div><a class="btn" style="color:#fff;border-color:#cdb4d5" href="index.html">Ver loja</a></div>
-<div class="admin-wrap"><div class="notice"><b>Protótipo editável:</b> as alterações desta versão ficam salvas neste navegador (localStorage). Antes de publicar a loja, vamos trocar isso por banco de dados + login real, para você editar de qualquer lugar.</div>
-<div class="admin-grid"><div class="panel"><h3>Adicionar produto</h3><form class="form" onsubmit="addProduct(event)"><label>Nome<input id="n"></label><label>Preço<input id="p" type="number" step=".01"></label><label>Categoria<select id="c"><option>Camisetas</option><option>Oversized</option><option>Moletons</option><option>Dry Fit</option><option>Infantil</option></select></label><label>Imagem (URL)<input id="i"></label><label>Descrição<textarea id="d"></textarea></label><label>Cores (separe por vírgula)<input id="co"></label><label>Tamanhos (separe por vírgula)<input id="s"></label><button class="btn solid" type="submit">Adicionar</button></form><hr><button class="btn" onclick="resetCatalog()">Restaurar catálogo original</button></div>
-<div class="panel"><h3>Produtos cadastrados</h3><div id="adminList" class="admin-list"></div></div></div></div>
-<script>
-async function adminBoot(){if(!localStorage.getItem('lophera_products')){let p=await (await fetch('assets/products.json')).json();localStorage.setItem('lophera_products',JSON.stringify(p))}renderAdmin()}
-function getP(){return JSON.parse(localStorage.getItem('lophera_products')||'[]')}
-function setP(p){localStorage.setItem('lophera_products',JSON.stringify(p));renderAdmin()}
-function renderAdmin(){document.getElementById('adminList').innerHTML=getP().map((p,i)=>`<div class="admin-item"><div><b>${escA(p.name)}</b><div style="font-size:10px">${p.category} · R$ ${Number(p.price).toFixed(2).replace('.',',')}</div></div><div><button onclick="editPrice(${i})">Preço</button> <button onclick="delP(${i})">Excluir</button></div></div>`).join('')}
-function addProduct(e){e.preventDefault();let p=getP();p.unshift({id:'local-'+Date.now(),name:n.value,sku:'',category:c.value,price:Number(document.getElementById('p').value||0),stock:999,description:d.value,colors:co.value.split(',').map(x=>x.trim()).filter(Boolean),sizes:s.value.split(',').map(x=>x.trim()).filter(Boolean),image:i.value,images:i.value?[i.value]:[],featured:false});setP(p);e.target.reset();alert('Produto adicionado!')}
-function editPrice(i){let p=getP();let v=prompt('Novo preço para '+p[i].name,p[i].price);if(v!==null){p[i].price=Number(v.replace(',','.'));setP(p)}}
-function delP(i){if(confirm('Excluir este produto?')){let p=getP();p.splice(i,1);setP(p)}}
-async function resetCatalog(){if(confirm('Restaurar os produtos da planilha?')){let p=await (await fetch('assets/products.json')).json();setP(p)}}
-function escA(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
-</script></body></html>
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Painel — Lophera Store</title><link rel="stylesheet" href="style.css">
+</head>
+<body class="admin">
+<div class="admin-head"><img src="assets/logo.svg" style="width:130px;filter:brightness(0) invert(1)"><div class="admin-head-actions"><span id="adminEmail"></span><a class="btn" style="color:#fff;border-color:#cdb4d5" href="index.html">Ver loja</a><button id="logoutBtn" class="btn" style="color:#fff;border-color:#cdb4d5;display:none" onclick="logout()">Sair</button></div></div>
+
+<div id="loginView" class="login-shell">
+  <div class="login-card">
+    <div class="small">LOPHERA STORE</div><h1>Painel administrativo</h1>
+    <p>Entre com a conta administradora da loja.</p>
+    <form class="form" onsubmit="login(event)">
+      <label>E-mail<input id="loginEmail" type="email" value="lopherastore@gmail.com" required></label>
+      <label>Senha<input id="loginPassword" type="password" required autocomplete="current-password"></label>
+      <button class="btn solid" type="submit">Entrar</button>
+    </form><div id="loginMsg" class="form-msg"></div>
+  </div>
+</div>
+
+<div id="adminView" class="admin-wrap" style="display:none">
+  <div class="notice"><b>Painel conectado ao Supabase.</b> As alterações feitas aqui passam a valer no catálogo online. As fotos novas são enviadas para o Storage <code>product-images</code>.</div>
+  <div class="admin-toolbar"><button class="btn solid" onclick="newProduct()">+ Novo produto</button><input id="adminSearch" class="search" placeholder="Buscar produto..." oninput="renderAdminList()"></div>
+  <div class="admin-grid">
+    <div class="panel">
+      <h3 id="formTitle">Novo produto</h3>
+      <form class="form" id="productForm" onsubmit="saveProduct(event)">
+        <input id="editId" type="hidden">
+        <label>Nome<input id="n" required></label>
+        <div class="form-two"><label>Preço<input id="p" type="number" min="0" step=".01" required></label><label>Preço promocional<input id="pp" type="number" min="0" step=".01"></label></div>
+        <label>Categoria<select id="c"></select></label>
+        <label>Descrição<textarea id="d" rows="6"></textarea></label>
+        <div class="form-two"><label>Cores <small>(separe por vírgula)</small><input id="co" placeholder="Preto, Branco"></label><label>Tamanhos <small>(separe por vírgula)</small><input id="s" placeholder="P, M, G, GG"></label></div>
+        <label>Estoque por combinação<input id="stock" type="number" min="0" value="0"></label>
+        <label>Foto principal<input id="photo" type="file" accept="image/*"></label>
+        <div id="currentImage"></div>
+        <div class="checks"><label><input id="active" type="checkbox" checked> Produto ativo</label><label><input id="featured" type="checkbox"> Destaque</label></div>
+        <div class="form-actions"><button class="btn solid" type="submit">Salvar produto</button><button class="btn" type="button" onclick="newProduct()">Limpar</button></div>
+        <div id="formMsg" class="form-msg"></div>
+      </form>
+    </div>
+    <div class="panel"><h3>Produtos cadastrados</h3><div id="adminList" class="admin-list"></div></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<script src="admin.js"></script>
+</body></html>
