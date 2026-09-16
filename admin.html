@@ -2,10 +2,10 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Painel — Lophera Store</title><link rel="icon" type="image/svg+xml" href="assets/logo.svg"><link rel="stylesheet" href="style.css">
+<title>Painel — Lophera Store</title><link rel="icon" type="image/svg+xml" href="assets/favicon.png?v=2.2"><link rel="stylesheet" href="style.css?v=2.2">
 </head>
 <body class="admin">
-<div class="admin-head"><img src="assets/logo.svg" style="width:130px;filter:brightness(0) invert(1)"><div class="admin-head-actions"><span id="adminEmail"></span><a class="btn" style="color:#fff;border-color:#cdb4d5" href="index.html">Ver loja</a><button id="logoutBtn" class="btn" style="color:#fff;border-color:#cdb4d5;display:none" onclick="logout()">Sair</button></div></div>
+<div class="admin-head"><img src="assets/logo-lophera.png?v=2.2" class="admin-logo"><div class="admin-head-actions"><span id="adminEmail"></span><a class="btn" style="color:#fff;border-color:#cdb4d5" href="index.html">Ver loja</a><button id="logoutBtn" class="btn" style="color:#fff;border-color:#cdb4d5;display:none" onclick="logout()">Sair</button></div></div>
 
 <div id="loginView" class="login-shell">
   <div class="login-card">
@@ -81,6 +81,8 @@
  <form class="form" onsubmit="saveInfo(event)">
   <label>Instagram<input id="settingInstagram"></label>
   <label>Link do Instagram<input id="settingInstagramUrl" type="url"></label>
+  <label>Facebook<input id="settingFacebookUrl" type="url"></label>
+  <label>Linktree<input id="settingLinktreeUrl" type="url"></label>
   <label>WhatsApp <small>somente números, com DDI</small><input id="settingWhatsapp"></label>
   <button class="btn solid" type="submit">Salvar informações</button><div id="infoMsg" class="form-msg"></div>
  </form></div>
@@ -88,6 +90,6 @@
 </main></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase-config.js"></script>
-<script src="admin.js"></script>
+<script src="supabase-config.js?v=2.2"></script>
+<script src="admin.js?v=2.2"></script>
 </body></html>

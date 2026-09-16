@@ -137,6 +137,8 @@ async function loadSettings(){
  $('settingSubtitle').value=storeSettings.hero_subtitle||'';
  $('settingInstagram').value=storeSettings.instagram_handle||'@lopherastore';
  $('settingInstagramUrl').value=storeSettings.instagram_url||'';
+ $('settingFacebookUrl').value=storeSettings.facebook_url||'';
+ $('settingLinktreeUrl').value=storeSettings.linktree_url||'';
  $('settingWhatsapp').value=storeSettings.whatsapp||'';
  $('logoPreview').innerHTML=storeSettings.logo_url?`<div class="setting-preview"><img src="${escA(storeSettings.logo_url)}"><span>Logo atual</span></div>`:'';
  $('heroPreview').innerHTML=storeSettings.hero_image_url?`<div class="setting-preview hero-prev"><img src="${escA(storeSettings.hero_image_url)}"><span>Banner atual</span></div>`:'';
@@ -191,7 +193,7 @@ async function saveInstagram(){
 }
 async function saveInfo(e){
  e.preventDefault();$('infoMsg').textContent='Salvando...';
- try{await upsertSettings({instagram_handle:$('settingInstagram').value,instagram_url:$('settingInstagramUrl').value,whatsapp:$('settingWhatsapp').value.replace(/\D/g,'')});$('infoMsg').textContent='Informações salvas ♡'}
+ try{await upsertSettings({instagram_handle:$('settingInstagram').value,instagram_url:$('settingInstagramUrl').value,facebook_url:$('settingFacebookUrl').value,linktree_url:$('settingLinktreeUrl').value,whatsapp:$('settingWhatsapp').value.replace(/\D/g,'')});$('infoMsg').textContent='Informações salvas ♡'}
  catch(e){$('infoMsg').textContent='Erro: '+e.message}
 }
 window.showTab=showTab;window.saveAppearance=saveAppearance;window.addInstagramRow=addInstagramRow;window.saveInstagram=saveInstagram;window.saveInfo=saveInfo;
