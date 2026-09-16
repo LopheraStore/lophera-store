@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 650">
+<defs>
+ <radialGradient id="bg"><stop stop-color="#efe5f5"/><stop offset=".58" stop-color="#ddd0e6"/><stop offset="1" stop-color="#c9b4d2"/></radialGradient>
+ <filter id="blur"><feGaussianBlur stdDeviation="28"/></filter>
+</defs>
+<rect width="1600" height="650" fill="url(#bg)"/>
+<g opacity=".35" filter="url(#blur)" fill="#8c5aa3">
+ <ellipse cx="260" cy="310" rx="260" ry="110"/>
+ <ellipse cx="1340" cy="250" rx="300" ry="120"/>
+ <ellipse cx="800" cy="560" rx="350" ry="70"/>
+</g>
+<g fill="none" stroke="#9a72aa" stroke-width="2" opacity=".45">
+ <path d="M80 560 C170 420 190 350 140 210"/>
+ <path d="M1520 560 C1430 420 1410 350 1460 210"/>
+ <path d="M110 500 C150 455 190 445 225 470"/>
+ <path d="M1490 500 C1450 455 1410 445 1375 470"/>
+</g>
+<g fill="#765184" opacity=".75">
+ <circle cx="230" cy="125" r="3"/><circle cx="370" cy="470" r="2"/><circle cx="1240" cy="125" r="3"/><circle cx="1370" cy="390" r="2"/>
+</g>
+<text x="800" y="225" text-anchor="middle" font-family="Georgia,serif" font-size="36" letter-spacing="13" fill="#4c3454">LOPHERA</text>
+<text x="800" y="315" text-anchor="middle" font-family="Georgia,serif" font-size="82" letter-spacing="5" fill="#5d326f">entre o delicado</text>
+<text x="800" y="395" text-anchor="middle" font-family="Georgia,serif" font-size="82" letter-spacing="5" fill="#5d326f">e o inesquecível.</text>
+<text x="800" y="460" text-anchor="middle" font-family="Arial,sans-serif" font-size="16" letter-spacing="4" fill="#5d465d">ESTILO • CONFORTO • PERSONALIDADE</text>
+</svg>

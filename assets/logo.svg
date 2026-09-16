@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 150">
+<defs><linearGradient id="g" x1="0" x2="1"><stop stop-color="#6f3b8f"/><stop offset=".55" stop-color="#a979bd"/><stop offset="1" stop-color="#4b225f"/></linearGradient></defs>
+<g fill="none" stroke="url(#g)" stroke-width="5" stroke-linecap="round">
+<path d="M135 116c-25-18-35-42-25-68 10-26 37-35 55-20 18 15 16 42 1 64-10 15-22 24-31 24z"/>
+<path d="M178 35c-12 22-14 49-2 73 10 19 29 26 46 17 17-9 23-30 13-48-10-18-28-24-49-18"/>
+<path d="M113 121c22-8 41-20 55-39"/>
+</g>
+<text x="210" y="92" text-anchor="middle" font-family="Georgia,serif" font-size="63" letter-spacing="7" fill="#5d326f">LS</text>
+<text x="210" y="135" text-anchor="middle" font-family="Georgia,serif" font-size="20" letter-spacing="9" fill="#4b334e">LOPHERA</text>
+</svg>
