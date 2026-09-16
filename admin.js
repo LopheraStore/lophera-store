@@ -14,12 +14,90 @@ function showTab(n,b){document.querySelectorAll('.admin-tab').forEach(x=>x.style
 function previewPage(page,b){$('sitePreview').src=page+'?adminPreview=1&t='+Date.now();$('previewUrl').textContent='lophera.com.br/'+(page==='index.html'?'':page);document.querySelectorAll('.v3-pagebuttons .chip').forEach(x=>x.classList.remove('active'));b.classList.add('active')}
 
 async function loadSettings(){const {data,error}=await supabaseClient.from('store_settings').select('*').eq('id','main').maybeSingle();if(error)return alert(error.message);storeSettings=data||storeSettings;storeSettings.content=storeSettings.content||{};storeSettings.size_guides=storeSettings.size_guides||{};$('settingTopbar').value=storeSettings.topbar_text||'';$('settingInstagram').value=storeSettings.instagram_handle||'';$('settingInstagramUrl').value=storeSettings.instagram_url||'';$('settingFacebookUrl').value=storeSettings.facebook_url||'';$('settingLinktreeUrl').value=storeSettings.linktree_url||'';$('settingWhatsapp').value=storeSettings.whatsapp||'';$('logoPreview').innerHTML=`<img class="setting-main-preview" src="${esc(storeSettings.logo_url||'assets/logo-lophera.png')}">`;$('heroPreview').innerHTML=`<img class="setting-main-preview hero-setting-preview" src="${esc(storeSettings.hero_image_url||'assets/hero.svg')}">`;renderInstagramRows();applyGuidePreviews()}
-async function upsertSettings(patch){const {data,error}=await supabaseClient.from('store_settings').upsert({...patch,id:'main',updated_at:new Date().toISOString()},{onConflict:'id'}).select().single();if(error)throw error;storeSettings={...storeSettings,...data};return data}
+async function upsertSettings(patch){
+  const payload={...patch,updated_at:new Date().toISOString()};
+  const {data,error}=await supabaseClient.from('store_settings').update(payload).eq('id','main').select().single();
+  if(error)throw error;
+  if(!data)throw new Error('A configuração não foi encontrada no banco.');
+  storeSettings={...storeSettings,...data};
+  return data;
+}
 async function uploadSetting(file,folder){if(!file)return null;const ext=(file.name.split('.').pop()||'png').replace(/[^a-z0-9]/gi,'').toLowerCase();const path=`site/${folder}-${Date.now()}.${ext}`;const {error}=await supabaseClient.storage.from('product-images').upload(path,file,{contentType:file.type||undefined});if(error)throw error;return supabaseClient.storage.from('product-images').getPublicUrl(path).data.publicUrl}
 
 window.addEventListener('message',e=>{if(e.data?.type!=='lophera-edit')return;activeEdit=e.data;$('editLabel').textContent=e.data.label;$('editSize').textContent=e.data.size||'';const current=getPath(storeSettings.content,e.data.key)??e.data.value??'';if(['image','background'].includes(e.data.editType)){$('editField').innerHTML=`<label class="upload-drop">Escolher nova imagem<input id="quickFile" type="file" accept="image/*"></label><div class="quick-help">A imagem será enviada para o armazenamento da Lophera.</div>`}else{$('editField').innerHTML=e.data.editType==='textarea'||e.data.editType==='html'?`<textarea id="quickValue" rows="7">${esc(String(current).replace(/<br\s*\/?>/gi,'\n'))}</textarea>`:`<input id="quickValue" value="${esc(current)}">`}$('editModal').style.display='grid';$('editMsg').textContent=''})
 function closeEditModal(){$('editModal').style.display='none';activeEdit=null}
-async function saveVisualEdit(){if(!activeEdit)return;$('editMsg').textContent='Salvando...';try{let value;if(['image','background'].includes(activeEdit.editType)){const f=$('quickFile').files[0];if(!f)throw new Error('Escolha uma imagem.');value=await uploadSetting(f,'visual-'+activeEdit.key.replace(/\./g,'-'));if(activeEdit.key==='logo_url'){await upsertSettings({logo_url:value});}else if(activeEdit.key==='hero_image_url'){await upsertSettings({hero_image_url:value});}else{const c=structuredClone(storeSettings.content||{});setPath(c,activeEdit.key,value);await upsertSettings({content:c})}}else{value=$('quickValue').value;if(activeEdit.editType==='html')value=esc(value).replace(/\n/g,'<br>');if(activeEdit.key==='topbar_text')await upsertSettings({topbar_text:value});else{const c=structuredClone(storeSettings.content||{});setPath(c,activeEdit.key,value);await upsertSettings({content:c})}}$('editMsg').textContent='Salvo ♡';setTimeout(()=>{closeEditModal();$('sitePreview').contentWindow.location.reload()},350)}catch(err){$('editMsg').textContent='Erro: '+err.message}}
+function applyEditToPreview(edit,value){
+  const frame=$('sitePreview');
+  const doc=frame?.contentDocument;
+  if(!doc)return;
+  doc.querySelectorAll(`[data-edit-key="${edit.key}"]`).forEach(el=>{
+    if(edit.editType==='image' && el.tagName==='IMG') el.src=value;
+    else if(edit.editType==='background') el.style.backgroundImage=`url("${value}")`;
+    else if(edit.editType==='html') el.innerHTML=value;
+    else el.textContent=value;
+  });
+  if(edit.key==='logo_url') doc.querySelectorAll('.logo, footer img').forEach(img=>img.src=value);
+  if(edit.key==='hero_image_url'){
+    const hero=doc.querySelector('.hero');
+    if(hero) hero.style.backgroundImage=`url("${value}")`;
+  }
+  if(edit.key==='topbar_text') doc.querySelectorAll('.topbar').forEach(el=>el.textContent=value);
+}
+function reloadPreviewFresh(){
+  const frame=$('sitePreview');
+  if(!frame)return;
+  const raw=frame.getAttribute('src')||'index.html?adminPreview=1';
+  const u=new URL(raw,location.href);
+  u.searchParams.set('adminPreview','1');
+  u.searchParams.set('refresh',Date.now());
+  frame.src=u.pathname.split('/').pop()+u.search;
+}
+async function saveVisualEdit(){
+  if(!activeEdit)return;
+  $('editMsg').textContent='Salvando...';
+  try{
+    let value;
+    if(['image','background'].includes(activeEdit.editType)){
+      const f=$('quickFile').files[0];
+      if(!f)throw new Error('Escolha uma imagem.');
+      value=await uploadSetting(f,'visual-'+activeEdit.key.replace(/\./g,'-'));
+      if(activeEdit.key==='logo_url') await upsertSettings({logo_url:value});
+      else if(activeEdit.key==='hero_image_url') await upsertSettings({hero_image_url:value});
+      else{
+        const c=structuredClone(storeSettings.content||{});
+        setPath(c,activeEdit.key,value);
+        await upsertSettings({content:c});
+      }
+    }else{
+      value=$('quickValue').value;
+      if(activeEdit.editType==='html') value=esc(value).replace(/
+/g,'<br>');
+      if(activeEdit.key==='topbar_text') await upsertSettings({topbar_text:value});
+      else{
+        const c=structuredClone(storeSettings.content||{});
+        setPath(c,activeEdit.key,value);
+        await upsertSettings({content:c});
+      }
+    }
+
+    // Confere o que realmente ficou gravado antes de dizer "Salvo".
+    const {data:check,error:checkError}=await supabaseClient.from('store_settings').select('*').eq('id','main').single();
+    if(checkError)throw checkError;
+    storeSettings=check;
+    let persisted;
+    if(activeEdit.key==='logo_url') persisted=check.logo_url;
+    else if(activeEdit.key==='hero_image_url') persisted=check.hero_image_url;
+    else if(activeEdit.key==='topbar_text') persisted=check.topbar_text;
+    else persisted=getPath(check.content||{},activeEdit.key);
+    if(String(persisted??'')!==String(value??'')) throw new Error('O Supabase não confirmou a alteração.');
+
+    applyEditToPreview(activeEdit,value);
+    $('editMsg').textContent='Salvo ♡';
+    setTimeout(()=>{closeEditModal();reloadPreviewFresh()},500);
+  }catch(err){
+    $('editMsg').textContent='Erro: '+err.message;
+  }
+}
 
 async function saveIdentity(which){try{const f=$(which==='logo'?'settingLogo':'settingHero').files[0];if(!f)throw new Error('Escolha uma imagem primeiro.');const url=await uploadSetting(f,which);await upsertSettings(which==='logo'?{logo_url:url}:{hero_image_url:url});$('identityMsg').textContent='Alteração salva ♡';await loadSettings();$('sitePreview').contentWindow.location.reload()}catch(e){$('identityMsg').textContent='Erro: '+e.message}}
 async function saveInfo(e){e.preventDefault();try{await upsertSettings({topbar_text:$('settingTopbar').value,instagram_handle:$('settingInstagram').value,instagram_url:$('settingInstagramUrl').value,facebook_url:$('settingFacebookUrl').value,linktree_url:$('settingLinktreeUrl').value,whatsapp:$('settingWhatsapp').value.replace(/\D/g,'')});$('infoMsg').textContent='Informações salvas ♡'}catch(e){$('infoMsg').textContent='Erro: '+e.message}}
