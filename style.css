@@ -62,3 +62,76 @@ footer{background:#302333;color:#e9dce9;padding:50px 6% 25px}.footer-grid{displa
 .guide-card img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block}
 .guide-card span{display:block;text-align:center;padding:14px;font:500 24px 'Cormorant Garamond',serif}
 @media(max-width:800px){.admin-side{flex-direction:row;overflow:auto}.guide-grid{grid-template-columns:1fr}}
+
+/* ===== LOPHERA V2.3 — CORREÇÃO VISUAL ===== */
+/* Logo: nunca distorcer */
+.brand{display:flex;align-items:center;justify-content:center}
+.brand img,
+header .brand img,
+.admin-head img,
+.admin-logo{
+  width:auto !important;
+  max-width:150px !important;
+  height:58px !important;
+  object-fit:contain !important;
+  object-position:center !important;
+  aspect-ratio:auto !important;
+  transform:none !important;
+}
+@media(max-width:700px){
+  .brand img,header .brand img{height:48px !important;max-width:125px !important}
+}
+
+/* Sobre: uma única camada de conteúdo */
+.about-page{background:#fbf9fc}
+.about-hero-clean{
+  min-height:470px;
+  padding:95px 24px 85px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  background:
+    radial-gradient(circle at 50% 45%,rgba(255,255,255,.82),rgba(238,222,243,.58) 45%,rgba(207,180,218,.78) 100%);
+  color:#4e315b;
+  position:relative;
+  overflow:hidden;
+}
+.about-hero-clean:before,.about-hero-clean:after{
+  content:"";
+  position:absolute;
+  width:150px;height:250px;
+  border:1px solid rgba(105,65,120,.25);
+  border-top-color:transparent;border-bottom-color:transparent;
+  border-radius:50%;
+  top:50%;transform:translateY(-50%);
+}
+.about-hero-clean:before{left:5%}
+.about-hero-clean:after{right:5%}
+.about-ornament{font-size:16px;margin-bottom:16px}
+.about-kicker{font:500 11px Montserrat,Arial,sans-serif;letter-spacing:5px;margin:0 0 18px}
+.about-hero-clean h1{
+  font-family:"Cormorant Garamond",Georgia,serif;
+  font-weight:500;
+  font-size:clamp(52px,7vw,88px);
+  line-height:.92;
+  letter-spacing:-2px;
+  margin:0;
+}
+.about-lead{
+  max-width:720px;
+  margin:28px auto 0;
+  font:400 16px/1.8 Montserrat,Arial,sans-serif;
+  color:#604c67;
+}
+.about-signature{margin-top:30px;font:500 11px Montserrat,Arial,sans-serif;letter-spacing:4px}
+.about-story{padding-top:85px;padding-bottom:95px}
+.about-story-inner{max-width:720px;margin:auto;text-align:center}
+.about-story-inner h2{font-size:clamp(40px,5vw,64px);margin:10px 0 20px}
+.about-story-inner>p:not(.small){font-size:15px;line-height:1.9;color:#665b69;margin-bottom:30px}
+@media(max-width:700px){
+ .about-hero-clean{min-height:420px;padding:75px 22px}
+ .about-hero-clean:before,.about-hero-clean:after{opacity:.45}
+ .about-hero-clean h1{letter-spacing:-1px}
+}
