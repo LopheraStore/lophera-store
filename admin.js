@@ -70,8 +70,7 @@ async function saveVisualEdit(){
       }
     }else{
       value=$('quickValue').value;
-      if(activeEdit.editType==='html') value=esc(value).replace(/
-/g,'<br>');
+      if(activeEdit.editType==='html') value=esc(value).replace(/\n/g,'<br>');
       if(activeEdit.key==='topbar_text') await upsertSettings({topbar_text:value});
       else{
         const c=structuredClone(storeSettings.content||{});
