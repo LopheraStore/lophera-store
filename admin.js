@@ -1,199 +1,53 @@
 
-let adminProducts=[], categories=[], storeSettings={id:'main',instagram_items:[]};
-const $=id=>document.getElementById(id);
-const escA=s=>String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+let adminProducts=[],categories=[],storeSettings={id:'main',content:{},instagram_items:[],size_guides:{}},activeEdit=null;
+const $=id=>document.getElementById(id), esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const slugify=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
+const getPath=(o,p)=>p.split('.').reduce((a,k)=>a&&a[k]!==undefined?a[k]:undefined,o);
+const setPath=(o,p,v)=>{let a=o,ks=p.split('.');ks.slice(0,-1).forEach(k=>a=a[k]??=( {}));a[ks.at(-1)]=v;return o};
 
-async function init(){
- const {data:{session}}=await supabaseClient.auth.getSession();
- if(session) await openAdmin(session); else showLogin();
- supabaseClient.auth.onAuthStateChange(async(_,session)=>{ if(session) await openAdmin(session); else showLogin(); });
-}
-function showLogin(){
- $('loginView').style.display='grid'; $('adminView').style.display='none'; $('logoutBtn').style.display='none'; $('adminEmail').textContent='';
-}
-async function login(e){
- e.preventDefault(); $('loginMsg').textContent='Entrando...';
- const {error}=await supabaseClient.auth.signInWithPassword({email:$('loginEmail').value.trim(),password:$('loginPassword').value});
- $('loginMsg').textContent=error?'Não foi possível entrar: '+error.message:'';
-}
+async function init(){const {data:{session}}=await supabaseClient.auth.getSession();if(session)await openAdmin(session);else showLogin();supabaseClient.auth.onAuthStateChange(async(_,s)=>s?await openAdmin(s):showLogin())}
+function showLogin(){$('loginView').style.display='grid';$('adminView').style.display='none';$('logoutBtn').style.display='none'}
+async function login(e){e.preventDefault();$('loginMsg').textContent='Entrando...';const {error}=await supabaseClient.auth.signInWithPassword({email:$('loginEmail').value.trim(),password:$('loginPassword').value});$('loginMsg').textContent=error?'Erro: '+error.message:''}
 async function logout(){await supabaseClient.auth.signOut()}
-async function openAdmin(session){
- const {data:isAdmin,error}=await supabaseClient.rpc('is_admin');
- if(error||!isAdmin){ await supabaseClient.auth.signOut(); $('loginMsg').textContent='Esta conta não tem permissão de administradora.'; return; }
- $('loginView').style.display='none'; $('adminView').style.display='block'; $('logoutBtn').style.display='inline-block'; $('adminEmail').textContent=session.user.email||'';
- await loadCategories(); await loadAdminProducts(); await loadSettings(); newProduct();
-}
-async function loadCategories(){
- const {data,error}=await supabaseClient.from('categories').select('*').order('name');
- if(error) return msg('Erro ao carregar categorias: '+error.message);
- categories=data||[];
- $('c').innerHTML=categories.map(x=>`<option value="${x.id}">${escA(x.name)}</option>`).join('');
-}
-async function loadAdminProducts(){
- const {data,error}=await supabaseClient.from('products').select('*').order('created_at',{ascending:false});
- if(error){ msg('Erro ao carregar produtos: '+error.message); return; }
- adminProducts=data||[];
- const ids=adminProducts.map(p=>p.id);
- let images=[], variants=[];
- if(ids.length){
-   const ir=await supabaseClient.from('product_images').select('*').in('product_id',ids);
-   const vr=await supabaseClient.from('product_variants').select('*').in('product_id',ids);
-   images=ir.data||[]; variants=vr.data||[];
- }
- adminProducts=adminProducts.map(p=>({
-   ...p,
-   categories:{name:categories.find(c=>String(c.id)===String(p.category_id))?.name||'Sem categoria'},
-   product_images:images.filter(x=>String(x.product_id)===String(p.id)),
-   product_variants:variants.filter(x=>String(x.product_id)===String(p.id))
- }));
- renderAdminList();
-}
-function renderAdminList(){
- const q=($('adminSearch')?.value||'').toLowerCase();
- const list=adminProducts.filter(p=>p.name.toLowerCase().includes(q));
- $('adminList').innerHTML=list.map(p=>{
-   const img=(p.product_images||[]).sort((a,b)=>(a.position||0)-(b.position||0))[0]?.image_url||'assets/hero.svg';
-   const stock=(p.product_variants||[]).reduce((a,v)=>a+(Number(v.stock)||0),0);
-   return `<div class="admin-product"><img src="${escA(img)}" onerror="this.src='assets/hero.svg'"><div class="admin-product-info"><b>${escA(p.name)}</b><span>${escA(p.categories?.name||'Sem categoria')} · ${Number(p.price).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})} · estoque ${stock}</span><span>${p.active?'Publicado':'Oculto'}${p.featured?' · Destaque':''}</span></div><div class="admin-product-actions"><button onclick="editProduct('${p.id}')">Editar</button><button class="danger" onclick="deleteProduct('${p.id}')">Excluir</button></div></div>`;
- }).join('')||'<div class="empty">Nenhum produto encontrado.</div>';
-}
-function newProduct(){
- $('productForm').reset(); $('editId').value=''; $('active').checked=true; $('stock').value=0; $('formTitle').textContent='Novo produto'; $('currentImage').innerHTML=''; $('formMsg').textContent='';
-}
-function editProduct(id){
- const p=adminProducts.find(x=>String(x.id)===String(id)); if(!p)return;
- $('editId').value=p.id; $('n').value=p.name||''; $('p').value=p.price||0; $('pp').value=p.promotional_price||''; $('c').value=p.category_id||'';
- $('d').value=p.description||''; $('active').checked=!!p.active; $('featured').checked=!!p.featured;
- const vars=p.product_variants||[]; $('co').value=[...new Set(vars.map(v=>v.color).filter(Boolean))].join(', '); $('s').value=[...new Set(vars.map(v=>v.size).filter(Boolean))].join(', ');
- $('stock').value=vars[0]?.stock??0;
- const img=(p.product_images||[]).sort((a,b)=>(a.position||0)-(b.position||0))[0]?.image_url;
- $('currentImage').innerHTML=img?`<div class="current-photo"><img src="${escA(img)}"><span>Foto atual</span></div>`:'';
- $('formTitle').textContent='Editar produto'; window.scrollTo({top:0,behavior:'smooth'});
-}
-async function ensureCategory(){
- if($('c').value) return Number($('c').value);
- const name='Outros', slug='outros';
- let existing=categories.find(x=>x.slug===slug); if(existing)return existing.id;
- const {data,error}=await supabaseClient.from('categories').insert({name,slug}).select().single();
- if(error) throw error; categories.push(data); return data.id;
-}
-async function uploadPhoto(productId,file){
- if(!file)return null;
- const ext=(file.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'');
- const path=`${productId}/${Date.now()}.${ext}`;
- const {error}=await supabaseClient.storage.from('product-images').upload(path,file,{upsert:false,contentType:file.type||undefined});
- if(error) throw error;
- return supabaseClient.storage.from('product-images').getPublicUrl(path).data.publicUrl;
-}
-async function saveProduct(e){
- e.preventDefault(); msg('Salvando...');
- try{
-   const category_id=await ensureCategory(), id=$('editId').value;
-   const payload={name:$('n').value.trim(),slug:slugify($('n').value)+(id?'-'+id:'-'+Date.now()),description:$('d').value.trim(),category_id,price:Number($('p').value||0),promotional_price:$('pp').value?Number($('pp').value):null,active:$('active').checked,featured:$('featured').checked};
-   let product;
-   if(id){
-     delete payload.slug;
-     const {data,error}=await supabaseClient.from('products').update(payload).eq('id',id).select().single(); if(error)throw error; product=data;
-   }else{
-     const {data,error}=await supabaseClient.from('products').insert(payload).select().single(); if(error)throw error; product=data;
-   }
-   const photo=$('photo').files[0];
-   if(photo){
-     const url=await uploadPhoto(product.id,photo);
-     const {error}=await supabaseClient.from('product_images').insert({product_id:product.id,image_url:url,position:0}); if(error)throw error;
-   }
-   const colors=$('co').value.split(',').map(x=>x.trim()).filter(Boolean), sizes=$('s').value.split(',').map(x=>x.trim()).filter(Boolean);
-   const cs=colors.length?colors:['']; const ss=sizes.length?sizes:[''];
-   await supabaseClient.from('product_variants').delete().eq('product_id',product.id);
-   const variants=[]; for(const color of cs)for(const size of ss)variants.push({product_id:product.id,color:color||null,size:size||null,stock:Number($('stock').value||0),active:true});
-   if(variants.length){const {error}=await supabaseClient.from('product_variants').insert(variants);if(error)throw error}
-   msg('Produto salvo com sucesso ♡'); await loadAdminProducts(); editProduct(product.id);
- }catch(err){console.error(err);msg('Erro ao salvar: '+err.message)}
-}
-async function deleteProduct(id){
- if(!confirm('Excluir este produto? Essa ação remove também as variações e referências de imagens.'))return;
- const {error}=await supabaseClient.from('products').delete().eq('id',id);
- if(error)return msg('Erro ao excluir: '+error.message);
- await loadAdminProducts(); newProduct(); msg('Produto excluído.');
-}
-function msg(t){$('formMsg').textContent=t}
-window.login=login;window.logout=logout;window.newProduct=newProduct;window.saveProduct=saveProduct;window.editProduct=editProduct;window.deleteProduct=deleteProduct;window.renderAdminList=renderAdminList;
-init();
+async function openAdmin(s){const {data,error}=await supabaseClient.rpc('is_admin');if(error||!data){await supabaseClient.auth.signOut();return}$('loginView').style.display='none';$('adminView').style.display='grid';$('logoutBtn').style.display='inline-block';$('adminEmail').textContent=s.user.email||'';await loadCategories();await loadAdminProducts();await loadSettings()}
+function showTab(n,b){document.querySelectorAll('.admin-tab').forEach(x=>x.style.display='none');$('tab-'+n).style.display='block';document.querySelectorAll('.side-link').forEach(x=>x.classList.remove('active'));b?.classList.add('active')}
+function previewPage(page,b){$('sitePreview').src=page+'?adminPreview=1&t='+Date.now();$('previewUrl').textContent='lophera.com.br/'+(page==='index.html'?'':page);document.querySelectorAll('.v3-pagebuttons .chip').forEach(x=>x.classList.remove('active'));b.classList.add('active')}
 
-function showTab(name,btn){
- document.querySelectorAll('.admin-tab').forEach(x=>x.style.display='none');
- document.getElementById('tab-'+name).style.display='block';
- document.querySelectorAll('.side-link').forEach(x=>x.classList.remove('active'));
- if(btn)btn.classList.add('active');
-}
-async function loadSettings(){
- const {data,error}=await supabaseClient.from('store_settings').select('*').eq('id','main').maybeSingle();
- if(error){console.warn(error);return}
- storeSettings=data||storeSettings;
- $('settingTopbar').value=storeSettings.topbar_text||'';
- $('settingKicker').value=storeSettings.hero_kicker||'';
- $('settingTitle').value=storeSettings.hero_title||'';
- $('settingSubtitle').value=storeSettings.hero_subtitle||'';
- $('settingInstagram').value=storeSettings.instagram_handle||'@lopherastore';
- $('settingInstagramUrl').value=storeSettings.instagram_url||'';
- $('settingFacebookUrl').value=storeSettings.facebook_url||'';
- $('settingLinktreeUrl').value=storeSettings.linktree_url||'';
- $('settingWhatsapp').value=storeSettings.whatsapp||'';
- $('logoPreview').innerHTML=storeSettings.logo_url?`<div class="setting-preview"><img src="${escA(storeSettings.logo_url)}"><span>Logo atual</span></div>`:'';
- $('heroPreview').innerHTML=storeSettings.hero_image_url?`<div class="setting-preview hero-prev"><img src="${escA(storeSettings.hero_image_url)}"><span>Banner atual</span></div>`:'';
- renderInstagramRows();
-}
-async function uploadSetting(file,folder){
- if(!file)return null;
- const ext=(file.name.split('.').pop()||'png').toLowerCase().replace(/[^a-z0-9]/g,'');
- const path=`site/${folder}-${Date.now()}.${ext}`;
- const {error}=await supabaseClient.storage.from('product-images').upload(path,file,{contentType:file.type||undefined});
- if(error)throw error;
- return supabaseClient.storage.from('product-images').getPublicUrl(path).data.publicUrl;
-}
-async function upsertSettings(patch){
- const payload={...patch,id:'main',updated_at:new Date().toISOString()};
- const {data,error}=await supabaseClient.from('store_settings').upsert(payload,{onConflict:'id'}).select().single();
- if(error)throw error; storeSettings={...storeSettings,...data}; return data;
-}
-async function saveAppearance(e){
- e.preventDefault(); $('appearanceMsg').textContent='Salvando...';
- try{
-   const logo=await uploadSetting($('settingLogo').files[0],'logo');
-   const hero=await uploadSetting($('settingHero').files[0],'hero');
-   const patch={topbar_text:$('settingTopbar').value,hero_kicker:$('settingKicker').value,hero_title:$('settingTitle').value,hero_subtitle:$('settingSubtitle').value};
-   if(logo)patch.logo_url=logo;if(hero)patch.hero_image_url=hero;
-   await upsertSettings(patch); $('appearanceMsg').textContent='Aparência salva ♡'; await loadSettings();
- }catch(e){$('appearanceMsg').textContent='Erro: '+e.message}
-}
-function renderInstagramRows(){
- const items=Array.isArray(storeSettings.instagram_items)?storeSettings.instagram_items:[];
- $('instaRows').innerHTML='';
- items.slice(0,6).forEach(x=>addInstagramRow(x));
-}
-function addInstagramRow(item={}){
- if(document.querySelectorAll('.insta-row').length>=6)return;
- const row=document.createElement('div');row.className='insta-row';
- row.dataset.url=item.image_url||'';
- row.innerHTML=`<div class="insta-thumb">${item.image_url?`<img src="${escA(item.image_url)}">`:'Foto'}</div><label>Imagem<input class="insta-file" type="file" accept="image/*"></label><label>Link do post<input class="insta-link" type="url" value="${escA(item.link||'')}" placeholder="https://instagram.com/p/..."></label><button class="btn" type="button" onclick="this.parentElement.remove()">Remover</button>`;
- $('instaRows').appendChild(row);
-}
-async function saveInstagram(){
- $('instagramMsg').textContent='Salvando...';
- try{
-  const rows=[...document.querySelectorAll('.insta-row')], items=[];
-  for(let i=0;i<rows.length;i++){
-   const file=rows[i].querySelector('.insta-file').files[0];
-   const image_url=file?await uploadSetting(file,'instagram-'+(i+1)):rows[i].dataset.url;
-   if(image_url)items.push({image_url,link:rows[i].querySelector('.insta-link').value.trim()});
-  }
-  await upsertSettings({instagram_items:items}); $('instagramMsg').textContent='Vitrine salva ♡'; await loadSettings();
- }catch(e){$('instagramMsg').textContent='Erro: '+e.message}
-}
-async function saveInfo(e){
- e.preventDefault();$('infoMsg').textContent='Salvando...';
- try{await upsertSettings({instagram_handle:$('settingInstagram').value,instagram_url:$('settingInstagramUrl').value,facebook_url:$('settingFacebookUrl').value,linktree_url:$('settingLinktreeUrl').value,whatsapp:$('settingWhatsapp').value.replace(/\D/g,'')});$('infoMsg').textContent='Informações salvas ♡'}
- catch(e){$('infoMsg').textContent='Erro: '+e.message}
-}
-window.showTab=showTab;window.saveAppearance=saveAppearance;window.addInstagramRow=addInstagramRow;window.saveInstagram=saveInstagram;window.saveInfo=saveInfo;
+async function loadSettings(){const {data,error}=await supabaseClient.from('store_settings').select('*').eq('id','main').maybeSingle();if(error)return alert(error.message);storeSettings=data||storeSettings;storeSettings.content=storeSettings.content||{};storeSettings.size_guides=storeSettings.size_guides||{};$('settingTopbar').value=storeSettings.topbar_text||'';$('settingInstagram').value=storeSettings.instagram_handle||'';$('settingInstagramUrl').value=storeSettings.instagram_url||'';$('settingFacebookUrl').value=storeSettings.facebook_url||'';$('settingLinktreeUrl').value=storeSettings.linktree_url||'';$('settingWhatsapp').value=storeSettings.whatsapp||'';$('logoPreview').innerHTML=`<img class="setting-main-preview" src="${esc(storeSettings.logo_url||'assets/logo-lophera.png')}">`;$('heroPreview').innerHTML=`<img class="setting-main-preview hero-setting-preview" src="${esc(storeSettings.hero_image_url||'assets/hero.svg')}">`;renderInstagramRows();applyGuidePreviews()}
+async function upsertSettings(patch){const {data,error}=await supabaseClient.from('store_settings').upsert({...patch,id:'main',updated_at:new Date().toISOString()},{onConflict:'id'}).select().single();if(error)throw error;storeSettings={...storeSettings,...data};return data}
+async function uploadSetting(file,folder){if(!file)return null;const ext=(file.name.split('.').pop()||'png').replace(/[^a-z0-9]/gi,'').toLowerCase();const path=`site/${folder}-${Date.now()}.${ext}`;const {error}=await supabaseClient.storage.from('product-images').upload(path,file,{contentType:file.type||undefined});if(error)throw error;return supabaseClient.storage.from('product-images').getPublicUrl(path).data.publicUrl}
+
+window.addEventListener('message',e=>{if(e.data?.type!=='lophera-edit')return;activeEdit=e.data;$('editLabel').textContent=e.data.label;$('editSize').textContent=e.data.size||'';const current=getPath(storeSettings.content,e.data.key)??e.data.value??'';if(['image','background'].includes(e.data.editType)){$('editField').innerHTML=`<label class="upload-drop">Escolher nova imagem<input id="quickFile" type="file" accept="image/*"></label><div class="quick-help">A imagem será enviada para o armazenamento da Lophera.</div>`}else{$('editField').innerHTML=e.data.editType==='textarea'||e.data.editType==='html'?`<textarea id="quickValue" rows="7">${esc(String(current).replace(/<br\s*\/?>/gi,'\n'))}</textarea>`:`<input id="quickValue" value="${esc(current)}">`}$('editModal').style.display='grid';$('editMsg').textContent=''})
+function closeEditModal(){$('editModal').style.display='none';activeEdit=null}
+async function saveVisualEdit(){if(!activeEdit)return;$('editMsg').textContent='Salvando...';try{let value;if(['image','background'].includes(activeEdit.editType)){const f=$('quickFile').files[0];if(!f)throw new Error('Escolha uma imagem.');value=await uploadSetting(f,'visual-'+activeEdit.key.replace(/\./g,'-'));if(activeEdit.key==='logo_url'){await upsertSettings({logo_url:value});}else if(activeEdit.key==='hero_image_url'){await upsertSettings({hero_image_url:value});}else{const c=structuredClone(storeSettings.content||{});setPath(c,activeEdit.key,value);await upsertSettings({content:c})}}else{value=$('quickValue').value;if(activeEdit.editType==='html')value=esc(value).replace(/\n/g,'<br>');if(activeEdit.key==='topbar_text')await upsertSettings({topbar_text:value});else{const c=structuredClone(storeSettings.content||{});setPath(c,activeEdit.key,value);await upsertSettings({content:c})}}$('editMsg').textContent='Salvo ♡';setTimeout(()=>{closeEditModal();$('sitePreview').contentWindow.location.reload()},350)}catch(err){$('editMsg').textContent='Erro: '+err.message}}
+
+async function saveIdentity(which){try{const f=$(which==='logo'?'settingLogo':'settingHero').files[0];if(!f)throw new Error('Escolha uma imagem primeiro.');const url=await uploadSetting(f,which);await upsertSettings(which==='logo'?{logo_url:url}:{hero_image_url:url});$('identityMsg').textContent='Alteração salva ♡';await loadSettings();$('sitePreview').contentWindow.location.reload()}catch(e){$('identityMsg').textContent='Erro: '+e.message}}
+async function saveInfo(e){e.preventDefault();try{await upsertSettings({topbar_text:$('settingTopbar').value,instagram_handle:$('settingInstagram').value,instagram_url:$('settingInstagramUrl').value,facebook_url:$('settingFacebookUrl').value,linktree_url:$('settingLinktreeUrl').value,whatsapp:$('settingWhatsapp').value.replace(/\D/g,'')});$('infoMsg').textContent='Informações salvas ♡'}catch(e){$('infoMsg').textContent='Erro: '+e.message}}
+
+function renderInstagramRows(){const items=Array.isArray(storeSettings.instagram_items)?storeSettings.instagram_items:[];$('instaRows').innerHTML='';items.slice(0,6).forEach(addInstagramRow)}
+function addInstagramRow(item={}){if(document.querySelectorAll('.insta-row').length>=6)return;const d=document.createElement('div');d.className='insta-row';d.dataset.url=item.image_url||'';d.innerHTML=`<div class="insta-thumb">${item.image_url?`<img src="${esc(item.image_url)}">`:'1080 × 1080'}</div><input class="insta-file" type="file" accept="image/*"><input class="insta-link" type="url" value="${esc(item.link||'')}" placeholder="Link do post"><button class="mini-danger" onclick="this.parentElement.remove()">×</button>`;$('instaRows').appendChild(d)}
+async function saveInstagram(){try{const items=[];for(const [i,r] of [...document.querySelectorAll('.insta-row')].entries()){const f=r.querySelector('.insta-file').files[0],url=f?await uploadSetting(f,'instagram-'+i):r.dataset.url;if(url)items.push({image_url:url,link:r.querySelector('.insta-link').value.trim()})}await upsertSettings({instagram_items:items});$('instagramMsg').textContent='Vitrine salva ♡';await loadSettings()}catch(e){$('instagramMsg').textContent='Erro: '+e.message}}
+
+async function loadCategories(){const {data,error}=await supabaseClient.from('categories').select('*').order('name');if(error)return;categories=data||[];renderCategories()}
+function renderCategories(){const el=$('categoryList');if(!el)return;el.innerHTML=categories.map(c=>`<div class="category-row"><div><b>${esc(c.name)}</b><span>${esc(c.slug)}</span></div><div><button class="btn" onclick="editCategory('${c.id}')">Editar</button><button class="mini-danger text" onclick="deleteCategory('${c.id}')">Excluir</button></div></div>`).join('')}
+async function newCategory(){const name=prompt('Nome da nova categoria:');if(!name)return;const {error}=await supabaseClient.from('categories').insert({name,slug:slugify(name)});if(error)return alert(error.message);await loadCategories()}
+async function editCategory(id){const c=categories.find(x=>String(x.id)===String(id)),name=prompt('Nome da categoria:',c.name);if(!name)return;const {error}=await supabaseClient.from('categories').update({name,slug:slugify(name)}).eq('id',id);if(error)return alert(error.message);await loadCategories();await loadAdminProducts()}
+async function deleteCategory(id){if(!confirm('Excluir esta categoria? Os produtos ficarão sem categoria.'))return;const {error}=await supabaseClient.from('categories').delete().eq('id',id);if(error)return alert(error.message);await loadCategories();await loadAdminProducts()}
+
+async function loadAdminProducts(){const {data,error}=await supabaseClient.from('products').select('*').order('created_at',{ascending:false});if(error)return;adminProducts=data||[];const ids=adminProducts.map(x=>x.id);let images=[],variants=[];if(ids.length){const ir=await supabaseClient.from('product_images').select('*').in('product_id',ids).order('position');const vr=await supabaseClient.from('product_variants').select('*').in('product_id',ids);images=ir.data||[];variants=vr.data||[]}adminProducts=adminProducts.map(p=>({...p,category:categories.find(c=>String(c.id)===String(p.category_id)),images:images.filter(i=>String(i.product_id)===String(p.id)),variants:variants.filter(v=>String(v.product_id)===String(p.id))}));renderAdminList()}
+function renderAdminList(){if(!$('adminList'))return;const q=($('adminSearch')?.value||'').toLowerCase();const arr=adminProducts.filter(p=>p.name.toLowerCase().includes(q));$('adminList').innerHTML=arr.map(p=>`<button class="product-card-admin" onclick="editProduct('${p.id}')"><img src="${esc(p.images[0]?.image_url||'assets/hero.svg')}"><div><b>${esc(p.name)}</b><span>${esc(p.category?.name||'Sem categoria')}</span><strong>${Number(p.price).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</strong></div><i>${p.active?'● Online':'○ Oculto'}</i></button>`).join('')||'<div class="empty">Nenhum produto.</div>'}
+function productForm(p={}){const vars=p.variants||[], imgs=p.images||[];return `<div class="drawer-head"><div><div class="small">${p.id?'EDITAR PRODUTO':'NOVO PRODUTO'}</div><h2>${p.id?esc(p.name):'Adicionar produto'}</h2></div><button class="modal-x" onclick="$('productDrawer').innerHTML='<div class=drawer-empty>Selecione um produto.</div>'">×</button></div><form class="form" onsubmit="saveProduct(event)"><input id="editId" type="hidden" value="${p.id||''}"><label>Nome<input id="n" required value="${esc(p.name||'')}"></label><div class="form-two"><label>Preço<input id="p" type="number" step=".01" value="${p.price??''}" required></label><label>Preço promocional<input id="pp" type="number" step=".01" value="${p.promotional_price??''}"></label></div><label>Categoria<select id="c">${categories.map(c=>`<option value="${c.id}" ${String(c.id)===String(p.category_id)?'selected':''}>${esc(c.name)}</option>`).join('')}</select></label><label>Descrição<textarea id="d" rows="6">${esc(p.description||'')}</textarea></label><div class="checks"><label><input id="active" type="checkbox" ${p.id?(p.active?'checked':''):'checked'}> Publicado</label><label><input id="featured" type="checkbox" ${p.featured?'checked':''}> Destaque</label></div><div class="subsection"><div class="sub-head"><h3>Fotos</h3><span>Quadrada recomendada: 1200 × 1200 px</span></div><div class="gallery-admin">${imgs.map(i=>`<div class="gallery-item"><img src="${esc(i.image_url)}"><button type="button" onclick="removeProductImage('${i.id}','${p.id}')">×</button></div>`).join('')}<label class="add-photo">+<small>Adicionar</small><input id="photos" type="file" accept="image/*" multiple></label></div></div><div class="subsection"><div class="sub-head"><h3>Variações e estoque</h3><button type="button" class="btn" onclick="addVariantRow()">+ Variação</button></div><div id="variantRows">${vars.map(variantRow).join('')}</div></div><div class="drawer-actions"><button class="btn solid">Salvar produto</button>${p.id?`<button type="button" class="mini-danger text" onclick="deleteProduct('${p.id}')">Excluir produto</button>`:''}</div><div id="formMsg" class="form-msg"></div></form>`}
+function variantRow(v={}){return `<div class="variant-row"><input class="v-color" placeholder="Cor" value="${esc(v.color||'')}"><input class="v-size" placeholder="Tamanho" value="${esc(v.size||'')}"><input class="v-sku" placeholder="SKU" value="${esc(v.sku||'')}"><input class="v-stock" type="number" min="0" placeholder="Estoque" value="${v.stock??0}"><button type="button" class="mini-danger" onclick="this.parentElement.remove()">×</button></div>`}
+function addVariantRow(){$('variantRows').insertAdjacentHTML('beforeend',variantRow())}
+function newProduct(){$('productDrawer').innerHTML=productForm({variants:[{}]})}
+function editProduct(id){const p=adminProducts.find(x=>String(x.id)===String(id));if(p)$('productDrawer').innerHTML=productForm(p)}
+async function uploadProductPhoto(id,f,pos){const ext=(f.name.split('.').pop()||'jpg').replace(/[^a-z0-9]/gi,'');const path=`${id}/${Date.now()}-${pos}.${ext}`;const {error}=await supabaseClient.storage.from('product-images').upload(path,f,{contentType:f.type||undefined});if(error)throw error;const url=supabaseClient.storage.from('product-images').getPublicUrl(path).data.publicUrl;const r=await supabaseClient.from('product_images').insert({product_id:id,image_url:url,position:pos});if(r.error)throw r.error}
+async function saveProduct(e){e.preventDefault();$('formMsg').textContent='Salvando...';try{const id=$('editId').value,payload={name:$('n').value.trim(),description:$('d').value,category_id:$('c').value||null,price:Number($('p').value),promotional_price:$('pp').value?Number($('pp').value):null,active:$('active').checked,featured:$('featured').checked};let prod;if(id){const r=await supabaseClient.from('products').update(payload).eq('id',id).select().single();if(r.error)throw r.error;prod=r.data}else{payload.slug=slugify(payload.name)+'-'+Date.now();const r=await supabaseClient.from('products').insert(payload).select().single();if(r.error)throw r.error;prod=r.data}const files=[...($('photos')?.files||[])];for(let i=0;i<files.length;i++)await uploadProductPhoto(prod.id,files[i],(prod.images?.length||0)+i);await supabaseClient.from('product_variants').delete().eq('product_id',prod.id);const rows=[...document.querySelectorAll('.variant-row')].map(r=>({product_id:prod.id,color:r.querySelector('.v-color').value||null,size:r.querySelector('.v-size').value||null,sku:r.querySelector('.v-sku').value||null,stock:Number(r.querySelector('.v-stock').value||0),active:true}));if(rows.length){const rr=await supabaseClient.from('product_variants').insert(rows);if(rr.error)throw rr.error}$('formMsg').textContent='Produto salvo ♡';await loadAdminProducts();editProduct(prod.id)}catch(err){$('formMsg').textContent='Erro: '+err.message}}
+async function removeProductImage(imgId,pid){if(!confirm('Remover esta foto do produto?'))return;const {error}=await supabaseClient.from('product_images').delete().eq('id',imgId);if(error)return alert(error.message);await loadAdminProducts();editProduct(pid)}
+async function deleteProduct(id){if(!confirm('Excluir este produto?'))return;const {error}=await supabaseClient.from('products').delete().eq('id',id);if(error)return alert(error.message);await loadAdminProducts();$('productDrawer').innerHTML='<div class="drawer-empty">Produto excluído.</div>'}
+
+function applyGuidePreviews(){const g=storeSettings.size_guides||{};const imgs=document.querySelectorAll('.guide-admin-img');if(g.oversized&&imgs[0])imgs[0].src=g.oversized;if(g.moletom&&imgs[1])imgs[1].src=g.moletom}
+async function saveGuide(type){try{const input=$(type==='oversized'?'guideOversized':'guideMoletom'),f=input.files[0];if(!f)throw new Error('Escolha uma imagem.');const url=await uploadSetting(f,'guia-'+type),g={...(storeSettings.size_guides||{}),[type]:url};await upsertSettings({size_guides:g});$('guideMsg').textContent='Guia atualizado ♡';await loadSettings()}catch(e){$('guideMsg').textContent='Erro: '+e.message}}
+
+Object.assign(window,{login,logout,showTab,previewPage,closeEditModal,saveVisualEdit,saveIdentity,saveInfo,addInstagramRow,saveInstagram,newCategory,editCategory,deleteCategory,newProduct,editProduct,addVariantRow,saveProduct,removeProductImage,deleteProduct,saveGuide,renderAdminList});
+init();

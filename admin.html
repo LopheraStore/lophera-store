@@ -1,95 +1,66 @@
-<!doctype html>
-<html lang="pt-BR">
-<head>
+<!doctype html><html lang="pt-BR"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Painel — Lophera Store</title><link rel="icon" type="image/svg+xml" href="assets/favicon.png?v=2.2"><link rel="stylesheet" href="style.css?v=2.3">
-</head>
-<body class="admin">
-<div class="admin-head"><img src="assets/logo-lophera.png?v=2.2" class="admin-logo"><div class="admin-head-actions"><span id="adminEmail"></span><a class="btn" style="color:#fff;border-color:#cdb4d5" href="index.html">Ver loja</a><button id="logoutBtn" class="btn" style="color:#fff;border-color:#cdb4d5;display:none" onclick="logout()">Sair</button></div></div>
+<title>Lophera Studio — Administração</title><link rel="icon" href="assets/favicon.png"><link rel="stylesheet" href="style.css?v=3">
+</head><body class="admin admin-v3">
+<header class="v3-top"><img src="assets/logo-lophera.png" class="admin-logo"><div><b>Lophera Studio</b><span>Editor da loja</span></div><div class="v3-top-actions"><span id="adminEmail"></span><a class="btn" href="index.html" target="_blank">Ver loja ↗</a><button id="logoutBtn" class="btn" onclick="logout()" style="display:none">Sair</button></div></header>
 
-<div id="loginView" class="login-shell">
-  <div class="login-card">
-    <div class="small">LOPHERA STORE</div><h1>Painel administrativo</h1>
-    <p>Entre com a conta administradora da loja.</p>
-    <form class="form" onsubmit="login(event)">
-      <label>E-mail<input id="loginEmail" type="email" value="lopherastore@gmail.com" required></label>
-      <label>Senha<input id="loginPassword" type="password" required autocomplete="current-password"></label>
-      <button class="btn solid" type="submit">Entrar</button>
-    </form><div id="loginMsg" class="form-msg"></div>
-  </div>
-</div>
+<div id="loginView" class="login-shell"><div class="login-card"><div class="small">ÁREA RESTRITA</div><h1>Lophera Studio</h1><p>Entre para editar sua loja.</p><form class="form" onsubmit="login(event)"><label>E-mail<input id="loginEmail" type="email" value="lopherastore@gmail.com" required></label><label>Senha<input id="loginPassword" type="password" required></label><button class="btn solid">Entrar</button></form><div id="loginMsg" class="form-msg"></div></div></div>
 
-<div id="adminView" class="admin-shell" style="display:none">
-<aside class="admin-side">
-  <button class="side-link active" data-tab="products" onclick="showTab('products',this)">Produtos</button>
-  <button class="side-link" data-tab="appearance" onclick="showTab('appearance',this)">Aparência da loja</button>
-  <button class="side-link" data-tab="instagram" onclick="showTab('instagram',this)">Instagram</button>
-  <button class="side-link" data-tab="info" onclick="showTab('info',this)">Informações</button>
+<div id="adminView" class="v3-shell" style="display:none">
+<aside class="v3-sidebar">
+<div class="v3-side-title">SITE</div>
+<button class="side-link active" onclick="showTab('editor',this)">✦ Editor visual</button>
+<button class="side-link" onclick="showTab('products',this)">▣ Produtos</button>
+<button class="side-link" onclick="showTab('categories',this)">⌗ Categorias</button>
+<button class="side-link" onclick="showTab('instagram',this)">◎ Instagram</button>
+<div class="v3-side-title">CONFIGURAÇÕES</div>
+<button class="side-link" onclick="showTab('identity',this)">◈ Identidade visual</button>
+<button class="side-link" onclick="showTab('info',this)">⌁ Contato e links</button>
+<button class="side-link" onclick="showTab('guides',this)">▤ Guias de tamanho</button>
 </aside>
-<main class="admin-main">
-  <section id="tab-products" class="admin-tab"><div class="notice"><b>Painel conectado ao Supabase.</b> As alterações feitas aqui passam a valer no catálogo online. As fotos novas são enviadas para o Storage <code>product-images</code>.</div>
-  <div class="admin-toolbar"><button class="btn solid" onclick="newProduct()">+ Novo produto</button><input id="adminSearch" class="search" placeholder="Buscar produto..." oninput="renderAdminList()"></div>
-  <div class="admin-grid">
-    <div class="panel">
-      <h3 id="formTitle">Novo produto</h3>
-      <form class="form" id="productForm" onsubmit="saveProduct(event)">
-        <input id="editId" type="hidden">
-        <label>Nome<input id="n" required></label>
-        <div class="form-two"><label>Preço<input id="p" type="number" min="0" step=".01" required></label><label>Preço promocional<input id="pp" type="number" min="0" step=".01"></label></div>
-        <label>Categoria<select id="c"></select></label>
-        <label>Descrição<textarea id="d" rows="6"></textarea></label>
-        <div class="form-two"><label>Cores <small>(separe por vírgula)</small><input id="co" placeholder="Preto, Branco"></label><label>Tamanhos <small>(separe por vírgula)</small><input id="s" placeholder="P, M, G, GG"></label></div>
-        <label>Estoque por combinação<input id="stock" type="number" min="0" value="0"></label>
-        <label>Foto principal<input id="photo" type="file" accept="image/*"></label>
-        <div id="currentImage"></div>
-        <div class="checks"><label><input id="active" type="checkbox" checked> Produto ativo</label><label><input id="featured" type="checkbox"> Destaque</label></div>
-        <div class="form-actions"><button class="btn solid" type="submit">Salvar produto</button><button class="btn" type="button" onclick="newProduct()">Limpar</button></div>
-        <div id="formMsg" class="form-msg"></div>
-      </form>
-    </div>
-    <div class="panel"><h3>Produtos cadastrados</h3><div id="adminList" class="admin-list"></div></div>
-  </div>
+
+<main class="v3-main">
+<section id="tab-editor" class="admin-tab">
+ <div class="v3-pagebar"><div><div class="small">EDITOR VISUAL</div><h2>Edite clicando no ✎</h2></div><div class="v3-pagebuttons"><button class="chip active" onclick="previewPage('index.html',this)">Início</button><button class="chip" onclick="previewPage('loja.html',this)">Loja</button><button class="chip" onclick="previewPage('sobre.html',this)">Sobre</button></div></div>
+ <div class="preview-note">Você está vendo uma prévia real do site. Passe o mouse e clique no <b>✎</b> para editar textos, imagens e banners.</div>
+ <div class="browser-frame"><div class="browser-dots">● ● ● <span id="previewUrl">lophera.com.br</span></div><iframe id="sitePreview" src="index.html?adminPreview=1"></iframe></div>
 </section>
 
-<section id="tab-appearance" class="admin-tab" style="display:none">
- <div class="panel wide-panel"><div class="small">PERSONALIZAÇÃO</div><h2>Aparência da loja</h2>
- <p class="muted">Troque a identidade visual sem editar arquivos no GitHub.</p>
- <form class="form" onsubmit="saveAppearance(event)">
-  <label>Logo da loja<input id="settingLogo" type="file" accept="image/*,.svg"></label>
-  <div id="logoPreview"></div>
-  <label>Imagem/banner principal<input id="settingHero" type="file" accept="image/*,.svg"></label>
-  <div id="heroPreview"></div>
-  <label>Frase do topo<input id="settingTopbar"></label>
-  <label>Texto pequeno do banner<input id="settingKicker"></label>
-  <label>Título principal<input id="settingTitle"></label>
-  <label>Subtítulo<input id="settingSubtitle"></label>
-  <button class="btn solid" type="submit">Salvar aparência</button><div id="appearanceMsg" class="form-msg"></div>
- </form></div>
+<section id="tab-products" class="admin-tab" style="display:none">
+ <div class="v3-pagebar"><div><div class="small">CATÁLOGO</div><h2>Produtos</h2></div><button class="btn solid" onclick="newProduct()">+ Adicionar produto</button></div>
+ <input id="adminSearch" class="search v3-search" placeholder="Buscar produto..." oninput="renderAdminList()">
+ <div class="product-manager"><div id="adminList" class="product-cards"></div><div id="productDrawer" class="product-drawer"><div class="drawer-empty">Selecione um produto ou clique em <b>Adicionar produto</b>.</div></div></div>
+</section>
+
+<section id="tab-categories" class="admin-tab" style="display:none">
+ <div class="v3-pagebar"><div><div class="small">ORGANIZAÇÃO</div><h2>Categorias</h2></div><button class="btn solid" onclick="newCategory()">+ Nova categoria</button></div>
+ <div id="categoryList" class="category-list"></div>
 </section>
 
 <section id="tab-instagram" class="admin-tab" style="display:none">
- <div class="panel wide-panel"><div class="small">HOME</div><h2>Vitrine do Instagram</h2>
- <p class="muted">Escolha até 6 imagens. Cada uma pode levar para um post diferente.</p>
- <div id="instaRows"></div>
- <button class="btn" type="button" onclick="addInstagramRow()">+ Adicionar foto</button>
- <button class="btn solid" type="button" onclick="saveInstagram()">Salvar Instagram</button>
- <div id="instagramMsg" class="form-msg"></div></div>
+ <div class="v3-pagebar"><div><div class="small">PÁGINA INICIAL</div><h2>Instagram</h2><p>Até 6 imagens quadradas. Recomendado: <b>1080 × 1080 px</b>.</p></div><button class="btn" onclick="addInstagramRow()">+ Foto</button></div>
+ <div id="instaRows" class="insta-admin-grid"></div><button class="btn solid" onclick="saveInstagram()">Salvar vitrine</button><div id="instagramMsg" class="form-msg"></div>
+</section>
+
+<section id="tab-identity" class="admin-tab" style="display:none">
+ <div class="v3-pagebar"><div><div class="small">MARCA</div><h2>Identidade visual</h2></div></div>
+ <div class="settings-grid"><div class="setting-card"><h3>Logo</h3><p>PNG transparente. Recomendado: até <b>1200 × 500 px</b>. A proporção é preservada.</p><div id="logoPreview"></div><input id="settingLogo" type="file" accept="image/*,.svg"><button class="btn solid" onclick="saveIdentity('logo')">Trocar logo</button></div>
+ <div class="setting-card"><h3>Banner principal</h3><p>Recomendado: <b>1920 × 700 px</b>. Nunca será esticado.</p><div id="heroPreview"></div><input id="settingHero" type="file" accept="image/*"><button class="btn solid" onclick="saveIdentity('hero')">Trocar banner</button></div></div>
+ <div id="identityMsg" class="form-msg"></div>
 </section>
 
 <section id="tab-info" class="admin-tab" style="display:none">
- <div class="panel wide-panel"><div class="small">CONTATO</div><h2>Informações da loja</h2>
- <form class="form" onsubmit="saveInfo(event)">
-  <label>Instagram<input id="settingInstagram"></label>
-  <label>Link do Instagram<input id="settingInstagramUrl" type="url"></label>
-  <label>Facebook<input id="settingFacebookUrl" type="url"></label>
-  <label>Linktree<input id="settingLinktreeUrl" type="url"></label>
-  <label>WhatsApp <small>somente números, com DDI</small><input id="settingWhatsapp"></label>
-  <button class="btn solid" type="submit">Salvar informações</button><div id="infoMsg" class="form-msg"></div>
- </form></div>
+ <div class="v3-pagebar"><div><div class="small">LOJA</div><h2>Contato e links</h2></div></div>
+ <form class="form wide-form" onsubmit="saveInfo(event)"><label>Aviso do topo<input id="settingTopbar"></label><div class="form-two"><label>Instagram<input id="settingInstagram"></label><label>Link do Instagram<input id="settingInstagramUrl" type="url"></label></div><div class="form-two"><label>Facebook<input id="settingFacebookUrl" type="url"></label><label>Linktree<input id="settingLinktreeUrl" type="url"></label></div><label>WhatsApp<input id="settingWhatsapp"></label><button class="btn solid">Salvar informações</button><div id="infoMsg" class="form-msg"></div></form>
+</section>
+
+<section id="tab-guides" class="admin-tab" style="display:none">
+ <div class="v3-pagebar"><div><div class="small">MEDIDAS</div><h2>Guias de tamanho</h2><p>Troque as artes usadas para orientar clientes.</p></div></div>
+ <div class="settings-grid"><div class="setting-card"><h3>Oversized</h3><p>Recomendado: imagem quadrada, <b>1200 × 1200 px</b>.</p><img class="guide-admin-img" src="assets/tabela-tamanhos-oversized.png"><input id="guideOversized" type="file" accept="image/*"><button class="btn solid" onclick="saveGuide('oversized')">Alterar</button></div>
+ <div class="setting-card"><h3>Moletom</h3><p>Recomendado: vertical, <b>1080 × 1620 px</b>.</p><img class="guide-admin-img" src="assets/tabela-tamanhos-moletom.png"><input id="guideMoletom" type="file" accept="image/*"><button class="btn solid" onclick="saveGuide('moletom')">Alterar</button></div></div><div id="guideMsg" class="form-msg"></div>
 </section>
 </main></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase-config.js?v=2.2"></script>
-<script src="admin.js?v=2.3"></script>
-</body></html>
+<div id="editModal" class="v3-modal" style="display:none"><div class="v3-modal-card"><button class="modal-x" onclick="closeEditModal()">×</button><div class="small">EDIÇÃO RÁPIDA</div><h2 id="editLabel">Editar</h2><p id="editSize" class="muted"></p><div id="editField"></div><div class="modal-actions"><button class="btn" onclick="closeEditModal()">Cancelar</button><button class="btn solid" onclick="saveVisualEdit()">Salvar alteração</button></div><div id="editMsg" class="form-msg"></div></div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-config.js?v=2.2"></script><script src="admin.js?v=3"></script></body></html>
