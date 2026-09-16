@@ -50,4 +50,96 @@ function applyGuidePreviews(){const g=storeSettings.size_guides||{};const imgs=d
 async function saveGuide(type){try{const input=$(type==='oversized'?'guideOversized':'guideMoletom'),f=input.files[0];if(!f)throw new Error('Escolha uma imagem.');const url=await uploadSetting(f,'guia-'+type),g={...(storeSettings.size_guides||{}),[type]:url};await upsertSettings({size_guides:g});$('guideMsg').textContent='Guia atualizado ♡';await loadSettings()}catch(e){$('guideMsg').textContent='Erro: '+e.message}}
 
 Object.assign(window,{login,logout,showTab,previewPage,closeEditModal,saveVisualEdit,saveIdentity,saveInfo,addInstagramRow,saveInstagram,newCategory,editCategory,deleteCategory,newProduct,editProduct,addVariantRow,saveProduct,removeProductImage,deleteProduct,saveGuide,renderAdminList});
+
+/* ===== V3.1 — EDITOR VISUAL ROBUSTO (controle pelo painel pai) ===== */
+function installVisualEditor(){
+  const frame=$('sitePreview');
+  if(!frame)return;
+  try{
+    const doc=frame.contentDocument || frame.contentWindow.document;
+    if(!doc || !doc.body)return;
+
+    let st=doc.getElementById('lophera-v31-editor-style');
+    if(!st){
+      st=doc.createElement('style');
+      st.id='lophera-v31-editor-style';
+      st.textContent=`
+        [data-edit-key]{position:relative!important;cursor:pointer!important;outline:1px dashed transparent;outline-offset:4px;transition:.15s}
+        [data-edit-key]:hover{outline:2px dashed #7b4b8c!important;outline-offset:5px}
+        [data-edit-key]::after{
+          content:"✎";position:absolute;right:8px;top:8px;z-index:2147483647;
+          width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+          background:#633d70;color:white;font:700 16px Arial;box-shadow:0 3px 12px #0005;
+          opacity:0;pointer-events:none
+        }
+        [data-edit-key]:hover::after{opacity:1}
+      `;
+      doc.head.appendChild(st);
+    }
+
+    doc.querySelectorAll('[data-edit-key]').forEach(el=>{
+      if(el.dataset.v31Bound==='1')return;
+      el.dataset.v31Bound='1';
+      el.title='Clique para editar: '+(el.dataset.editLabel||el.dataset.editKey);
+      el.addEventListener('click',ev=>{
+        ev.preventDefault(); ev.stopPropagation();
+        const type=el.dataset.editType||'text';
+        let value='';
+        if(type==='html') value=el.innerHTML;
+        else if(type!=='image' && type!=='background') value=el.textContent.trim();
+        openVisualEdit({
+          key:el.dataset.editKey,
+          editType:type,
+          label:el.dataset.editLabel||el.dataset.editKey,
+          size:el.dataset.editSize||'',
+          value
+        });
+      },true);
+    });
+  }catch(err){
+    console.error('Lophera editor:',err);
+  }
+}
+
+function openVisualEdit(data){
+  activeEdit=data;
+  $('editLabel').textContent=data.label||'Editar';
+  $('editSize').textContent=data.size||'';
+  const current=getPath(storeSettings.content,data.key) ?? data.value ?? '';
+  if(['image','background'].includes(data.editType)){
+    $('editField').innerHTML=`<label class="upload-drop">Escolher nova imagem<input id="quickFile" type="file" accept="image/*"></label><div class="quick-help">${esc(data.size||'A proporção original da imagem será preservada.')}</div>`;
+  }else{
+    const val=String(current).replace(/<br\s*\/?>/gi,'\n');
+    $('editField').innerHTML=(data.editType==='textarea'||data.editType==='html')
+      ? `<textarea id="quickValue" rows="7">${esc(val)}</textarea>`
+      : `<input id="quickValue" value="${esc(val)}">`;
+  }
+  $('editMsg').textContent='';
+  $('editModal').style.display='grid';
+}
+
+function bindPreviewEditor(){
+  const frame=$('sitePreview');
+  if(!frame || frame.dataset.v31Listener==='1')return;
+  frame.dataset.v31Listener='1';
+  frame.addEventListener('load',()=>setTimeout(installVisualEditor,350));
+  setTimeout(installVisualEditor,600);
+}
+
+const _openAdminV31=openAdmin;
+openAdmin=async function(s){
+  await _openAdminV31(s);
+  bindPreviewEditor();
+};
+
+const _previewPageV31=previewPage;
+previewPage=function(page,b){
+  _previewPageV31(page,b);
+  setTimeout(bindPreviewEditor,50);
+};
+
+window.openVisualEdit=openVisualEdit;
+window.installVisualEditor=installVisualEditor;
+window.previewPage=previewPage;
+
 init();
