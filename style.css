@@ -34,3 +34,7 @@ footer{background:#302333;color:#e9dce9;padding:50px 6% 25px}.footer-grid{displa
 .form-actions{display:flex;gap:10px;flex-wrap:wrap}.current-photo{display:flex;align-items:center;gap:12px;padding:10px;background:#f8f5f8}.current-photo img{width:76px;height:76px;object-fit:cover}.current-photo span{font-size:11px}
 .admin-product{display:grid;grid-template-columns:72px 1fr auto;gap:12px;align-items:center;border-bottom:1px solid #eee6f0;padding:12px 0}.admin-product img{width:72px;height:72px;object-fit:cover;background:#f4eef5}.admin-product-info{display:flex;flex-direction:column;gap:4px}.admin-product-info span{font-size:10px;color:#766c78}.admin-product-actions{display:flex;gap:6px}.admin-product-actions button{border:1px solid #d8c9dd;background:#fff;padding:7px 9px;cursor:pointer}.admin-product-actions .danger{color:#8d3f54}
 @media(max-width:760px){.form-two{grid-template-columns:1fr}.admin-product{grid-template-columns:60px 1fr}.admin-product img{width:60px;height:60px}.admin-product-actions{grid-column:2}.admin-toolbar{align-items:stretch;flex-direction:column}.admin-toolbar .search{max-width:none}.admin-head-actions span{display:none}}
+
+/* Correção do hero: o texto/arte já fazem parte de assets/hero.svg. */
+.hero{position:relative}
+.hero-click{position:absolute;inset:0;display:block}
