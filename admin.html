@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Painel — Lophera Store</title><link rel="stylesheet" href="style.css">
+<title>Painel — Lophera Store</title><link rel="icon" type="image/svg+xml" href="assets/logo.svg"><link rel="stylesheet" href="style.css">
 </head>
 <body class="admin">
 <div class="admin-head"><img src="assets/logo.svg" style="width:130px;filter:brightness(0) invert(1)"><div class="admin-head-actions"><span id="adminEmail"></span><a class="btn" style="color:#fff;border-color:#cdb4d5" href="index.html">Ver loja</a><button id="logoutBtn" class="btn" style="color:#fff;border-color:#cdb4d5;display:none" onclick="logout()">Sair</button></div></div>
@@ -19,8 +19,15 @@
   </div>
 </div>
 
-<div id="adminView" class="admin-wrap" style="display:none">
-  <div class="notice"><b>Painel conectado ao Supabase.</b> As alterações feitas aqui passam a valer no catálogo online. As fotos novas são enviadas para o Storage <code>product-images</code>.</div>
+<div id="adminView" class="admin-shell" style="display:none">
+<aside class="admin-side">
+  <button class="side-link active" data-tab="products" onclick="showTab('products',this)">Produtos</button>
+  <button class="side-link" data-tab="appearance" onclick="showTab('appearance',this)">Aparência da loja</button>
+  <button class="side-link" data-tab="instagram" onclick="showTab('instagram',this)">Instagram</button>
+  <button class="side-link" data-tab="info" onclick="showTab('info',this)">Informações</button>
+</aside>
+<main class="admin-main">
+  <section id="tab-products" class="admin-tab"><div class="notice"><b>Painel conectado ao Supabase.</b> As alterações feitas aqui passam a valer no catálogo online. As fotos novas são enviadas para o Storage <code>product-images</code>.</div>
   <div class="admin-toolbar"><button class="btn solid" onclick="newProduct()">+ Novo produto</button><input id="adminSearch" class="search" placeholder="Buscar produto..." oninput="renderAdminList()"></div>
   <div class="admin-grid">
     <div class="panel">
@@ -42,7 +49,43 @@
     </div>
     <div class="panel"><h3>Produtos cadastrados</h3><div id="adminList" class="admin-list"></div></div>
   </div>
-</div>
+</section>
+
+<section id="tab-appearance" class="admin-tab" style="display:none">
+ <div class="panel wide-panel"><div class="small">PERSONALIZAÇÃO</div><h2>Aparência da loja</h2>
+ <p class="muted">Troque a identidade visual sem editar arquivos no GitHub.</p>
+ <form class="form" onsubmit="saveAppearance(event)">
+  <label>Logo da loja<input id="settingLogo" type="file" accept="image/*,.svg"></label>
+  <div id="logoPreview"></div>
+  <label>Imagem/banner principal<input id="settingHero" type="file" accept="image/*,.svg"></label>
+  <div id="heroPreview"></div>
+  <label>Frase do topo<input id="settingTopbar"></label>
+  <label>Texto pequeno do banner<input id="settingKicker"></label>
+  <label>Título principal<input id="settingTitle"></label>
+  <label>Subtítulo<input id="settingSubtitle"></label>
+  <button class="btn solid" type="submit">Salvar aparência</button><div id="appearanceMsg" class="form-msg"></div>
+ </form></div>
+</section>
+
+<section id="tab-instagram" class="admin-tab" style="display:none">
+ <div class="panel wide-panel"><div class="small">HOME</div><h2>Vitrine do Instagram</h2>
+ <p class="muted">Escolha até 6 imagens. Cada uma pode levar para um post diferente.</p>
+ <div id="instaRows"></div>
+ <button class="btn" type="button" onclick="addInstagramRow()">+ Adicionar foto</button>
+ <button class="btn solid" type="button" onclick="saveInstagram()">Salvar Instagram</button>
+ <div id="instagramMsg" class="form-msg"></div></div>
+</section>
+
+<section id="tab-info" class="admin-tab" style="display:none">
+ <div class="panel wide-panel"><div class="small">CONTATO</div><h2>Informações da loja</h2>
+ <form class="form" onsubmit="saveInfo(event)">
+  <label>Instagram<input id="settingInstagram"></label>
+  <label>Link do Instagram<input id="settingInstagramUrl" type="url"></label>
+  <label>WhatsApp <small>somente números, com DDI</small><input id="settingWhatsapp"></label>
+  <button class="btn solid" type="submit">Salvar informações</button><div id="infoMsg" class="form-msg"></div>
+ </form></div>
+</section>
+</main></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>

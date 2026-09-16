@@ -13,27 +13,20 @@ function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&l
 function shortName(n){return String(n||'').replace(/\s+(Unissex|Masculina|Feminina|Casual|Confortável|Premium|Estampada|100% Algodão).*$/i,'').replace(/\s{2,}/g,' ').trim()}
 
 async function loadProductsFromSupabase(){
-  const {data,error}=await supabaseClient
-    .from('products')
-    .select('id,name,slug,description,price,promotional_price,featured,category_id,categories(name),product_images(image_url,position),product_variants(id,sku,color,size,stock,active)')
-    .eq('active',true)
-    .order('featured',{ascending:false})
-    .order('created_at',{ascending:false});
-  if(error) throw error;
-  return (data||[]).map(p=>{
-    const imgs=(p.product_images||[]).sort((a,b)=>(a.position||0)-(b.position||0)).map(x=>x.image_url).filter(Boolean);
-    const variants=(p.product_variants||[]).filter(v=>v.active!==false);
-    return {
-      ...p,
-      id:String(p.id),
-      category:p.categories?.name||'Outros',
-      image:imgs[0]||'assets/hero.svg',
-      images:imgs,
-      variants,
-      colors:[...new Set(variants.map(v=>v.color).filter(Boolean))],
-      sizes:[...new Set(variants.map(v=>v.size).filter(Boolean))],
-      stock:variants.reduce((a,v)=>a+(Number(v.stock)||0),0)
-    };
+  const pr=await supabaseClient.from('products').select('*').eq('active',true).order('featured',{ascending:false}).order('created_at',{ascending:false});
+  if(pr.error) throw pr.error;
+  const base=pr.data||[], ids=base.map(p=>p.id);
+  if(!ids.length)return [];
+  const [cr,ir,vr]=await Promise.all([
+    supabaseClient.from('categories').select('*'),
+    supabaseClient.from('product_images').select('*').in('product_id',ids),
+    supabaseClient.from('product_variants').select('*').in('product_id',ids).eq('active',true)
+  ]);
+  if(cr.error)throw cr.error;if(ir.error)throw ir.error;if(vr.error)throw vr.error;
+  return base.map(p=>{
+    const imgs=(ir.data||[]).filter(x=>String(x.product_id)===String(p.id)).sort((a,b)=>(a.position||0)-(b.position||0)).map(x=>x.image_url).filter(Boolean);
+    const variants=(vr.data||[]).filter(x=>String(x.product_id)===String(p.id));
+    return {...p,id:String(p.id),category:(cr.data||[]).find(c=>String(c.id)===String(p.category_id))?.name||'Outros',image:imgs[0]||'assets/hero.svg',images:imgs,variants,colors:[...new Set(variants.map(v=>v.color).filter(Boolean))],sizes:[...new Set(variants.map(v=>v.size).filter(Boolean))],stock:variants.reduce((a,v)=>a+(Number(v.stock)||0),0)};
   });
 }
 async function loadSeed(){ return await (await fetch('assets/products.json')).json(); }

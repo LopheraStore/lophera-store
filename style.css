@@ -38,3 +38,13 @@ footer{background:#302333;color:#e9dce9;padding:50px 6% 25px}.footer-grid{displa
 /* Correção do hero: o texto/arte já fazem parte de assets/hero.svg. */
 .hero{position:relative}
 .hero-click{position:absolute;inset:0;display:block}
+
+/* ===== V2.1 painel completo ===== */
+.admin-shell{display:grid;grid-template-columns:220px 1fr;max-width:1380px;margin:auto;min-height:calc(100vh - 82px)}
+.admin-side{padding:28px 14px;border-right:1px solid #e4d8e8;background:#f8f4f9}
+.side-link{width:100%;border:0;background:transparent;text-align:left;padding:13px 14px;margin-bottom:4px;cursor:pointer;color:#5c4861}
+.side-link.active{background:#744084;color:white}.admin-main{padding:28px;min-width:0}.wide-panel{max-width:850px}
+.muted{color:#7d7180;font-size:12px;margin-bottom:22px}.setting-preview{display:flex;gap:14px;align-items:center;background:#f8f5f8;padding:12px;margin-top:-5px}.setting-preview img{max-width:180px;max-height:80px;object-fit:contain}.hero-prev img{max-width:420px;max-height:160px}
+.insta-row{display:grid;grid-template-columns:80px 1fr 2fr auto;gap:10px;align-items:end;padding:12px 0;border-bottom:1px solid #eee5f0}.insta-thumb{width:70px;height:70px;background:#eee5f0;display:grid;place-items:center;font-size:10px}.insta-thumb img{width:100%;height:100%;object-fit:cover}
+.instagram-grid a{display:block;overflow:hidden}.instagram-grid img{width:100%;height:100%;object-fit:cover;display:block}
+@media(max-width:800px){.admin-shell{grid-template-columns:1fr}.admin-side{display:flex;overflow:auto;border-right:0;border-bottom:1px solid #e4d8e8}.side-link{white-space:nowrap;width:auto}.admin-main{padding:16px}.insta-row{grid-template-columns:70px 1fr}.insta-row .insta-link{grid-column:2}.insta-row button{grid-column:2}}
