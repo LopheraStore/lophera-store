@@ -1,0 +1,16 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Painel Lophera</title><link rel="stylesheet" href="style.css"></head><body class="admin" onload="adminBoot()">
+<div class="admin-head"><div><img src="assets/logo.svg" style="width:130px;filter:brightness(0) invert(1)"></div><a class="btn" style="color:#fff;border-color:#cdb4d5" href="index.html">Ver loja</a></div>
+<div class="admin-wrap"><div class="notice"><b>Protótipo editável:</b> as alterações desta versão ficam salvas neste navegador (localStorage). Antes de publicar a loja, vamos trocar isso por banco de dados + login real, para você editar de qualquer lugar.</div>
+<div class="admin-grid"><div class="panel"><h3>Adicionar produto</h3><form class="form" onsubmit="addProduct(event)"><label>Nome<input id="n"></label><label>Preço<input id="p" type="number" step=".01"></label><label>Categoria<select id="c"><option>Camisetas</option><option>Oversized</option><option>Moletons</option><option>Dry Fit</option><option>Infantil</option></select></label><label>Imagem (URL)<input id="i"></label><label>Descrição<textarea id="d"></textarea></label><label>Cores (separe por vírgula)<input id="co"></label><label>Tamanhos (separe por vírgula)<input id="s"></label><button class="btn solid" type="submit">Adicionar</button></form><hr><button class="btn" onclick="resetCatalog()">Restaurar catálogo original</button></div>
+<div class="panel"><h3>Produtos cadastrados</h3><div id="adminList" class="admin-list"></div></div></div></div>
+<script>
+async function adminBoot(){if(!localStorage.getItem('lophera_products')){let p=await (await fetch('assets/products.json')).json();localStorage.setItem('lophera_products',JSON.stringify(p))}renderAdmin()}
+function getP(){return JSON.parse(localStorage.getItem('lophera_products')||'[]')}
+function setP(p){localStorage.setItem('lophera_products',JSON.stringify(p));renderAdmin()}
+function renderAdmin(){document.getElementById('adminList').innerHTML=getP().map((p,i)=>`<div class="admin-item"><div><b>${escA(p.name)}</b><div style="font-size:10px">${p.category} · R$ ${Number(p.price).toFixed(2).replace('.',',')}</div></div><div><button onclick="editPrice(${i})">Preço</button> <button onclick="delP(${i})">Excluir</button></div></div>`).join('')}
+function addProduct(e){e.preventDefault();let p=getP();p.unshift({id:'local-'+Date.now(),name:n.value,sku:'',category:c.value,price:Number(document.getElementById('p').value||0),stock:999,description:d.value,colors:co.value.split(',').map(x=>x.trim()).filter(Boolean),sizes:s.value.split(',').map(x=>x.trim()).filter(Boolean),image:i.value,images:i.value?[i.value]:[],featured:false});setP(p);e.target.reset();alert('Produto adicionado!')}
+function editPrice(i){let p=getP();let v=prompt('Novo preço para '+p[i].name,p[i].price);if(v!==null){p[i].price=Number(v.replace(',','.'));setP(p)}}
+function delP(i){if(confirm('Excluir este produto?')){let p=getP();p.splice(i,1);setP(p)}}
+async function resetCatalog(){if(confirm('Restaurar os produtos da planilha?')){let p=await (await fetch('assets/products.json')).json();setP(p)}}
+function escA(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+</script></body></html>
