@@ -1,1 +1,3 @@
--- placeholder
+-- LOPHERA V5 — CONTAS DE CLIENTES + PEDIDOS + VARIAÇÕES
+-- IMPORTANTE: o script completo de 1000 variações é gerado a partir do export original.
+-- Execute somente a versão completa fornecida no próximo passo; este arquivo será completado antes da publicação da V5.
