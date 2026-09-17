@@ -2,3 +2,4 @@ Lophera Studio V4
 Branch de desenvolvimento segura.
 Execute ATUALIZAR_SUPABASE_V4.sql antes de testar as telas que usam os novos campos.
 O site publicado em main permanece inalterado até a aprovação da V4.
+Build: catálogo + categorias + identidade + frete + diagnóstico.
