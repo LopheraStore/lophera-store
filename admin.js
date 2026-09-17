@@ -36,7 +36,11 @@ function applyEditToPreview(edit,value){
     else if(edit.editType==='html') el.innerHTML=value;
     else el.textContent=value;
   });
-  if(edit.key==='logo_url') doc.querySelectorAll('.logo, footer img').forEach(img=>img.src=value);
+  if(edit.key==='logo_url'){
+    doc.querySelectorAll('header img, .logo, .brand img, footer img').forEach(img=>{
+      img.src=value + (value.includes('?')?'&':'?') + 'v=' + Date.now();
+    });
+  }
   if(edit.key==='hero_image_url'){
     const hero=doc.querySelector('.hero');
     if(hero) hero.style.backgroundImage=`url("${value}")`;
@@ -61,8 +65,18 @@ async function saveVisualEdit(){
       const f=$('quickFile').files[0];
       if(!f)throw new Error('Escolha uma imagem.');
       value=await uploadSetting(f,'visual-'+activeEdit.key.replace(/\./g,'-'));
-      if(activeEdit.key==='logo_url') await upsertSettings({logo_url:value});
-      else if(activeEdit.key==='hero_image_url') await upsertSettings({hero_image_url:value});
+      if(activeEdit.key==='logo_url'){
+        const c=structuredClone(storeSettings.content||{});
+        setPath(c,'logo_url',value);
+        setPath(c,'site.logo_url',value);
+        await upsertSettings({logo_url:value,content:c});
+      }
+      else if(activeEdit.key==='hero_image_url'){
+        const c=structuredClone(storeSettings.content||{});
+        setPath(c,'hero_image_url',value);
+        setPath(c,'home.hero_image_url',value);
+        await upsertSettings({hero_image_url:value,content:c});
+      }
       else{
         const c=structuredClone(storeSettings.content||{});
         setPath(c,activeEdit.key,value);
