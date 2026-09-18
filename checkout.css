@@ -15,3 +15,14 @@
 .shipping-option input{width:auto!important;margin:0!important;accent-color:#6c3f7d}
 .shipping-option b{display:block;font-size:12px;color:#4f3c55}.shipping-option span{display:block;font-size:10px;color:#87798a;margin-top:4px;line-height:1.5}.shipping-option strong{font-size:12px;color:#5c356a;text-align:right}
 @media(max-width:560px){.shipping-option{grid-template-columns:auto 1fr}.shipping-option strong{grid-column:2;text-align:left}}
+
+.coupon-box{margin:18px 0 4px;padding:16px;border:1px dashed #cdb9d3;background:#fcf9fd}
+.coupon-box>label{display:block;font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:#6c5872;margin-bottom:8px}
+.coupon-row{display:grid;grid-template-columns:1fr auto;gap:8px}
+.coupon-row input{min-width:0;border:1px solid #d9cbdc;background:#fff;padding:11px 12px;text-transform:uppercase;outline:0}
+.coupon-row input:focus{border-color:#805590;box-shadow:0 0 0 2px #eee3f2}
+.coupon-row input:disabled{background:#f4eef6;color:#684976}
+.coupon-msg{font-size:10px;line-height:1.5;margin-top:8px;color:#807184;min-height:15px}
+.coupon-msg.success{color:#5d3a67}.coupon-msg.error{color:#9b4658}
+.discount-line{color:#6b3c7b}.discount-line small{font-size:9px;color:#927a99;margin-left:4px}.discount-line b{color:#6b3c7b}
+@media(max-width:560px){.coupon-row{grid-template-columns:1fr}.coupon-row .btn{width:100%}}
