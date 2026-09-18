@@ -179,3 +179,10 @@ header .brand img,
   .about-page-hero h1{font-size:46px}
   .about-page-hero p{font-size:18px}
 }
+
+/* Avaliações verificadas */
+.product-reviews{margin-top:26px;padding-top:22px;border-top:1px solid #eadfec}
+.reviews-head{display:flex;justify-content:space-between;gap:20px;align-items:flex-end;margin-bottom:14px}.reviews-head h3{margin:3px 0 0;font:500 24px 'Cormorant Garamond',serif}.reviews-score{text-align:right}.reviews-score>b{font:500 30px 'Cormorant Garamond',serif;color:#5d3569}.reviews-score>span{display:block;white-space:nowrap}.reviews-score small{display:block;color:#8a7a8e;font-size:9px;margin-top:3px}
+.star-on{color:#6c3f7d}.star-off{color:#d8cbdc}.reviews-list{display:grid;gap:10px}.review-card{background:#fbf8fc;border:1px solid #e7dce9;padding:14px}.review-top{display:flex;justify-content:space-between;gap:12px;align-items:center}.review-top b{font-size:11px}.verified-review{font-size:9px;color:#6b4b73;margin:4px 0 8px}.review-card h4{margin:5px 0;font-size:12px}.review-card p{font-size:11px;line-height:1.7;color:#665a69;margin:5px 0}.review-card>small{font-size:9px;color:#948698}.reviews-empty,.reviews-loading{font-size:11px;color:#857789;padding:14px 0}
+.review-action{margin-top:10px}.review-form{margin-top:10px;padding:14px;background:#faf7fb;border:1px solid #e3d8e6}.review-form label{display:block;font-size:10px;margin:8px 0}.review-form select,.review-form input,.review-form textarea{width:100%;margin-top:5px;padding:9px;border:1px solid #d9cbdc;background:#fff}.review-form textarea{min-height:90px;resize:vertical}.review-success{font-size:10px;color:#684274;margin-top:8px}
+@media(max-width:560px){.reviews-head{align-items:flex-start;flex-direction:column}.reviews-score{text-align:left}}
