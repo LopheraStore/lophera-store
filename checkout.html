@@ -7,7 +7,7 @@
   <link rel="icon" href="assets/favicon.png">
   <link rel="stylesheet" href="style.css?v=checkout1">
   <link rel="stylesheet" href="mobile.css?v=checkout1">
-  <link rel="stylesheet" href="checkout.css?v=checkout2">
+  <link rel="stylesheet" href="checkout.css?v=checkout3">
 </head>
 <body>
   <div class="topbar">LOPHERA STORE · FINALIZAÇÃO SEGURA</div>
@@ -70,7 +70,16 @@
       <aside class="checkout-card checkout-summary">
         <div class="checkout-step"><span>4</span><div><b>Resumo do pedido</b><small>Confira os itens antes de pagar.</small></div></div>
         <div id="checkoutItems"></div>
+        <div class="coupon-box">
+          <label for="couponCode">Cupom de desconto</label>
+          <div class="coupon-row">
+            <input id="couponCode" placeholder="Digite seu cupom" autocomplete="off">
+            <button id="applyCouponBtn" class="btn" type="button" onclick="applyCoupon()">Aplicar</button>
+          </div>
+          <div id="couponMsg" class="coupon-msg"></div>
+        </div>
         <div class="summary-line"><span>Subtotal</span><b id="checkoutSubtotal">R$ 0,00</b></div>
+        <div id="discountLine" class="summary-line discount-line" style="display:none"><span>Desconto <small id="discountCode"></small></span><b id="checkoutDiscount">- R$ 0,00</b></div>
         <div class="summary-line"><span>Frete</span><b id="checkoutShipping">A calcular</b></div>
         <div class="summary-line total"><span>Total atual</span><b id="checkoutTotal">R$ 0,00</b></div>
       </aside>
@@ -81,6 +90,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js?v=checkout1"></script>
-  <script src="checkout.js?v=checkout2"></script>
+  <script src="checkout.js?v=checkout3"></script>
 </body>
 </html>
