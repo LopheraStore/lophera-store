@@ -141,7 +141,15 @@ async function finalize(e){
     if(pe)throw pe;
     if(!selectedShipping)throw new Error('Escolha uma opção de frete antes de continuar.');
     const items=cart.map(x=>({product_id:x.id,variant_id:x.variant_id,quantity:x.qty}));
-    const {data,error}=await supabaseClient.functions.invoke('mercadopago-checkout',{body:{items,shipping_address:shippingPayload(),shipping_service_id:selectedShipping.service_id,coupon_code:appliedCoupon?.code||null}});
+    let cartId=null;
+    try{
+      const meta=JSON.parse(localStorage.getItem('lophera_cart_meta')||'null');
+      if(meta?.id&&meta?.token){
+        const mark=await supabaseClient.rpc('mark_cart_checkout_started',{p_cart_id:meta.id,p_client_token:meta.token});
+        if(!mark.error)cartId=meta.id;
+      }
+    }catch(_){}
+    const {data,error}=await supabaseClient.functions.invoke('mercadopago-checkout',{body:{items,shipping_address:shippingPayload(),shipping_service_id:selectedShipping.service_id,coupon_code:appliedCoupon?.code||null,cart_id:cartId}});
     if(error)throw error;
     if(data?.error)throw new Error(data.error);
     if(!data?.checkout_url)throw new Error('O Mercado Pago não retornou o link de pagamento.');
