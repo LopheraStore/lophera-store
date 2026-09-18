@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Finalizar compra — Lophera Store</title>
+  <link rel="icon" href="assets/favicon.png">
+  <link rel="stylesheet" href="style.css?v=checkout1">
+  <link rel="stylesheet" href="mobile.css?v=checkout1">
+  <link rel="stylesheet" href="checkout.css?v=checkout1">
+</head>
+<body>
+  <div class="topbar">LOPHERA STORE · FINALIZAÇÃO SEGURA</div>
+  <header><nav class="nav">
+    <div class="navlinks left"><a href="index.html">Início</a><a href="loja.html">Loja</a><a href="sobre.html">Sobre</a></div>
+    <a href="index.html"><img class="logo" src="assets/logo-lophera.png"></a>
+    <div class="navlinks right"><a href="conta.html">♡ <span class="hide-mobile">Minha conta</span></a></div>
+  </nav></header>
+
+  <main class="checkout-shell">
+    <div class="checkout-title">
+      <div class="small">CHECKOUT</div>
+      <h1>Finalizar compra</h1>
+      <p>Confira seus dados, endereço de entrega e o resumo antes de seguir para o pagamento.</p>
+    </div>
+
+    <div class="checkout-grid">
+      <section class="checkout-card">
+        <div class="checkout-step"><span>1</span><div><b>Dados do cliente</b><small>Usaremos estes dados para o pedido e envio.</small></div></div>
+        <form id="checkoutForm" class="checkout-form">
+          <div class="form-two">
+            <label>Nome completo<input id="co_name" required autocomplete="name"></label>
+            <label>Telefone<input id="co_phone" required autocomplete="tel"></label>
+          </div>
+          <div class="form-two">
+            <label>CPF<input id="co_cpf" required inputmode="numeric"></label>
+            <label>E-mail<input id="co_email" disabled></label>
+          </div>
+
+          <div class="checkout-section-title"><span>2</span><div><b>Endereço de entrega</b><small>O endereço ficará salvo na sua conta.</small></div></div>
+
+          <div class="form-two">
+            <label>CEP<input id="co_zip" required inputmode="numeric" maxlength="9" autocomplete="postal-code"></label>
+            <label>Estado<input id="co_state" required maxlength="2" autocomplete="address-level1"></label>
+          </div>
+          <div class="form-two">
+            <label>Cidade<input id="co_city" required autocomplete="address-level2"></label>
+            <label>Bairro<input id="co_neighborhood" required></label>
+          </div>
+          <label>Endereço<input id="co_address" required autocomplete="street-address"></label>
+          <div class="form-two">
+            <label>Número<input id="co_number" required></label>
+            <label>Complemento<input id="co_complement"></label>
+          </div>
+          <label>Ponto de referência<input id="co_reference"></label>
+
+          <div class="checkout-section-title"><span>3</span><div><b>Frete</b><small>A integração de cálculo automático será adicionada em seguida.</small></div></div>
+          <div class="shipping-placeholder">
+            <div><b>Entrega padrão</b><span>Frete ainda não calculado automaticamente</span></div>
+            <strong>A calcular</strong>
+          </div>
+
+          <div id="checkoutMsg" class="form-msg"></div>
+          <button id="payContinueBtn" class="btn solid checkout-pay" type="submit">Continuar para pagamento</button>
+          <p class="checkout-safe">Você será levado ao ambiente seguro do Mercado Pago para escolher Pix, cartão ou boleto.</p>
+        </form>
+      </section>
+
+      <aside class="checkout-card checkout-summary">
+        <div class="checkout-step"><span>4</span><div><b>Resumo do pedido</b><small>Confira os itens antes de pagar.</small></div></div>
+        <div id="checkoutItems"></div>
+        <div class="summary-line"><span>Subtotal</span><b id="checkoutSubtotal">R$ 0,00</b></div>
+        <div class="summary-line"><span>Frete</span><b>A calcular</b></div>
+        <div class="summary-line total"><span>Total atual</span><b id="checkoutTotal">R$ 0,00</b></div>
+      </aside>
+    </div>
+  </main>
+
+  <footer><div class="copy" style="border:0;margin:0">© 2026 LOPHERA STORE · PAGAMENTO SEGURO</div></footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js?v=checkout1"></script>
+  <script src="checkout.js?v=checkout1"></script>
+</body>
+</html>
