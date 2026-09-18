@@ -7,7 +7,7 @@
   <link rel="icon" href="assets/favicon.png">
   <link rel="stylesheet" href="style.css?v=checkout1">
   <link rel="stylesheet" href="mobile.css?v=checkout1">
-  <link rel="stylesheet" href="checkout.css?v=checkout1">
+  <link rel="stylesheet" href="checkout.css?v=checkout2">
 </head>
 <body>
   <div class="topbar">LOPHERA STORE · FINALIZAÇÃO SEGURA</div>
@@ -54,11 +54,12 @@
           </div>
           <label>Ponto de referência<input id="co_reference"></label>
 
-          <div class="checkout-section-title"><span>3</span><div><b>Frete</b><small>A integração de cálculo automático será adicionada em seguida.</small></div></div>
-          <div class="shipping-placeholder">
-            <div><b>Entrega padrão</b><span>Frete ainda não calculado automaticamente</span></div>
+          <div class="checkout-section-title"><span>3</span><div><b>Frete</b><small>Calculado automaticamente pelo Melhor Envio para o seu CEP.</small></div></div>
+          <div id="shippingStatus" class="shipping-placeholder">
+            <div><b>Informe seu CEP</b><span>As opções de entrega aparecerão aqui automaticamente.</span></div>
             <strong>A calcular</strong>
           </div>
+          <div id="shippingOptions" class="shipping-options"></div>
 
           <div id="checkoutMsg" class="form-msg"></div>
           <button id="payContinueBtn" class="btn solid checkout-pay" type="submit">Continuar para pagamento</button>
@@ -70,7 +71,7 @@
         <div class="checkout-step"><span>4</span><div><b>Resumo do pedido</b><small>Confira os itens antes de pagar.</small></div></div>
         <div id="checkoutItems"></div>
         <div class="summary-line"><span>Subtotal</span><b id="checkoutSubtotal">R$ 0,00</b></div>
-        <div class="summary-line"><span>Frete</span><b>A calcular</b></div>
+        <div class="summary-line"><span>Frete</span><b id="checkoutShipping">A calcular</b></div>
         <div class="summary-line total"><span>Total atual</span><b id="checkoutTotal">R$ 0,00</b></div>
       </aside>
     </div>
@@ -80,6 +81,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-config.js?v=checkout1"></script>
-  <script src="checkout.js?v=checkout1"></script>
+  <script src="checkout.js?v=checkout2"></script>
 </body>
 </html>
