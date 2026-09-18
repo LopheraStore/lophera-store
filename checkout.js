@@ -2,7 +2,7 @@ const $=id=>document.getElementById(id);
 const money=v=>(Number(v)||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 const safe=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const cart=JSON.parse(localStorage.getItem('lophera_test_cart')||'[]');
-let currentUser=null,selectedShipping=null,shippingQuotes=[];
+let currentUser=null,selectedShipping=null,shippingQuotes=[],appliedCoupon=null;
 
 function renderSummary(){
   const box=$('checkoutItems');
@@ -23,10 +23,20 @@ async function loadProfile(){
 
 function cartSubtotal(){return cart.reduce((a,x)=>a+Number(x.price||0)*Number(x.qty||1),0)}
 function updateTotals(){
-  const subtotal=cartSubtotal(),freight=selectedShipping?Number(selectedShipping.customer_price||0):0;
+  const subtotal=cartSubtotal(),discount=Number(appliedCoupon?.discount_amount||0),freight=selectedShipping?Number(selectedShipping.customer_price||0):0;
   $('checkoutSubtotal').textContent=money(subtotal);
   $('checkoutShipping').textContent=selectedShipping?(selectedShipping.free_shipping?'Grátis':money(freight)):'A calcular';
-  $('checkoutTotal').textContent=money(subtotal+freight);
+  $('checkoutTotal').textContent=money(Math.max(0,subtotal-discount)+freight);
+  const line=$('discountLine');
+  if(appliedCoupon){
+    line.style.display='flex';
+    $('checkoutDiscount').textContent='- '+money(discount);
+    $('discountCode').textContent='('+appliedCoupon.code+')';
+  }else{
+    line.style.display='none';
+    $('checkoutDiscount').textContent='- R$ 0,00';
+    $('discountCode').textContent='';
+  }
 }
 function renderShippingOptions(){
   const box=$('shippingOptions');
@@ -34,6 +44,45 @@ function renderShippingOptions(){
   box.innerHTML=shippingQuotes.map(q=>'<label class="shipping-option '+(selectedShipping?.service_id===q.service_id?'selected':'')+'"><input type="radio" name="shipping" value="'+safe(q.service_id)+'" '+(selectedShipping?.service_id===q.service_id?'checked':'')+'><div><b>'+safe(q.company)+' · '+safe(q.name)+'</b><span>'+(q.delivery_time?('Prazo estimado: '+q.delivery_time+' dia'+(q.delivery_time===1?'':'s')+' útil'+(q.delivery_time===1?'':'e')+'s'):'Prazo informado pela transportadora')+'</span></div><strong>'+(q.free_shipping?'GRÁTIS':money(q.customer_price))+'</strong></label>').join('');
   box.querySelectorAll('input[name="shipping"]').forEach(r=>r.addEventListener('change',()=>{selectedShipping=shippingQuotes.find(q=>q.service_id===r.value)||null;renderShippingOptions();updateTotals()}));
 }
+async function applyCoupon(){
+  const input=$('couponCode'),btn=$('applyCouponBtn'),msg=$('couponMsg');
+  const code=input.value.trim().toUpperCase();
+  if(!code){msg.textContent='Digite um cupom.';msg.className='coupon-msg error';return}
+  btn.disabled=true;btn.textContent='Aplicando...';msg.textContent='';
+  try{
+    const items=cart.map(x=>({product_id:x.id,variant_id:x.variant_id,quantity:x.qty}));
+    const {data,error}=await supabaseClient.functions.invoke('validate-coupon',{body:{code,items}});
+    if(error)throw error;
+    if(!data?.ok)throw new Error(data?.error||'Cupom inválido.');
+    appliedCoupon=data;
+    input.value=data.code;
+    input.disabled=true;
+    btn.textContent='Remover';
+    btn.onclick=removeCoupon;
+    msg.textContent='Cupom aplicado ♡ Você economizou '+money(data.discount_amount)+'.';
+    msg.className='coupon-msg success';
+    updateTotals();
+  }catch(err){
+    appliedCoupon=null;
+    msg.textContent=err?.message||'Não foi possível aplicar o cupom.';
+    msg.className='coupon-msg error';
+    updateTotals();
+  }finally{
+    btn.disabled=false;
+    if(!appliedCoupon){btn.textContent='Aplicar';btn.onclick=applyCoupon}
+  }
+}
+function removeCoupon(){
+  appliedCoupon=null;
+  const input=$('couponCode'),btn=$('applyCouponBtn'),msg=$('couponMsg');
+  input.disabled=false;input.value='';
+  btn.textContent='Aplicar';btn.onclick=applyCoupon;
+  msg.textContent='Cupom removido.';msg.className='coupon-msg';
+  updateTotals();
+}
+window.applyCoupon=applyCoupon;
+window.removeCoupon=removeCoupon;
+
 async function quoteShipping(){
   const cep=$('co_zip').value.replace(/\D/g,'');
   selectedShipping=null;shippingQuotes=[];renderShippingOptions();updateTotals();
@@ -92,7 +141,7 @@ async function finalize(e){
     if(pe)throw pe;
     if(!selectedShipping)throw new Error('Escolha uma opção de frete antes de continuar.');
     const items=cart.map(x=>({product_id:x.id,variant_id:x.variant_id,quantity:x.qty}));
-    const {data,error}=await supabaseClient.functions.invoke('mercadopago-checkout',{body:{items,shipping_address:shippingPayload(),shipping_service_id:selectedShipping.service_id}});
+    const {data,error}=await supabaseClient.functions.invoke('mercadopago-checkout',{body:{items,shipping_address:shippingPayload(),shipping_service_id:selectedShipping.service_id,coupon_code:appliedCoupon?.code||null}});
     if(error)throw error;
     if(data?.error)throw new Error(data.error);
     if(!data?.checkout_url)throw new Error('O Mercado Pago não retornou o link de pagamento.');
