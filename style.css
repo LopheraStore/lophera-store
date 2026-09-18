@@ -188,3 +188,11 @@ header .brand img,
 @media(max-width:560px){.reviews-head{align-items:flex-start;flex-direction:column}.reviews-score{text-align:left}}
 
 .policy-shell{max-width:980px;margin:0 auto;padding:58px 24px 80px}.policy-card{background:#fff;border:1px solid var(--line);box-shadow:var(--shadow);padding:26px;margin:16px 0}.policy-card h3{font:500 30px 'Cormorant Garamond',serif;color:#51345d;margin:0 0 12px}.policy-card p{font-size:12px;line-height:1.9;color:#655969}.policy-card b{color:#4f3657}
+
+/* ===== Favoritos ===== */
+.product-heart{position:absolute;right:12px;top:12px;z-index:5;width:40px;height:40px;border:1px solid rgba(108,63,125,.18);background:rgba(255,255,255,.93);border-radius:50%;display:grid;place-items:center;font-size:22px;line-height:1;color:#6c3f7d;box-shadow:0 6px 18px rgba(58,34,66,.10);cursor:pointer;transition:.2s}
+.product-heart:hover{transform:scale(1.07);background:#fff}.product-heart.liked{background:#6c3f7d;color:#fff;border-color:#6c3f7d}
+.product-actions{display:flex;gap:8px;flex-wrap:wrap}.product-actions .btn{flex:1;min-width:150px}.favorite-modal-btn{white-space:nowrap}
+.favorites-nav{display:flex;align-items:center;gap:4px}.fav-badge{display:inline-block;background:#6c3f7d;color:#fff;min-width:17px;height:17px;line-height:17px;text-align:center;border-radius:99px;font-size:9px;padding:0 4px}
+.favorites-hero{min-height:62vh}.favorites-empty{grid-column:1/-1;text-align:center;background:#fff;border:1px solid var(--line);padding:65px 25px;box-shadow:var(--shadow)}.favorites-empty-heart{font:68px 'Cormorant Garamond',serif;color:#8e689a}.favorites-empty h3{font:500 30px 'Cormorant Garamond',serif;color:#51345d;margin:5px 0}.favorites-empty p{font-size:12px;color:#76697a;margin:0 auto 22px;max-width:500px;line-height:1.8}
+@media(max-width:560px){.product-heart{width:34px;height:34px;font-size:19px;right:8px;top:8px}.navlinks.right{gap:9px}.fav-badge{position:relative;top:-7px;margin-left:-4px}.product-actions .btn{width:100%;flex-basis:100%}}
