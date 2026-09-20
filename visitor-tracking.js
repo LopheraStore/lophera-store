@@ -31,5 +31,13 @@
       });
     }catch(_){}
   }
-  document.addEventListener('DOMContentLoaded',track,{once:true});
+  async function identify(){
+    if(typeof supabaseClient==='undefined')return;
+    const m=meta();
+    try{await supabaseClient.rpc('identify_visitor_session',{p_session_id:m.id,p_visitor_token:m.token})}catch(_){}
+  }
+  document.addEventListener('DOMContentLoaded',()=>{
+    track();
+    try{supabaseClient.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_IN'&&session)identify()})}catch(_){}
+  },{once:true});
 })();
