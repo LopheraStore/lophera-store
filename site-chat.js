@@ -36,8 +36,8 @@
       .lp-chat-heart{font:44px 'Cormorant Garamond',serif;color:#7b4a8a}.lp-chat-welcome h3{font:500 25px 'Cormorant Garamond',serif;margin:3px 0 8px;color:#4b3153}.lp-chat-welcome p{font-size:10px;line-height:1.7;color:#746778;margin:0 0 14px}
       .lp-chat-welcome input{width:100%;padding:11px 12px;border:1px solid #d9cbdc;background:#fff;margin:5px 0;font-size:11px;border-radius:8px}
       .lp-chat-welcome .btn{width:100%;margin-top:8px;border-radius:8px}.lp-chat-note{font-size:8px!important;color:#998c9c!important;margin-top:8px!important}
-      .lp-chat-msgs{display:flex;flex-direction:column;gap:9px}.lp-chat-msg{max-width:82%;padding:9px 11px;border-radius:13px;font-size:11px;line-height:1.55;word-break:break-word}
-      .lp-chat-msg.customer{align-self:flex-end;background:#6c3f7d;color:#fff;border-bottom-right-radius:4px}.lp-chat-msg.admin{align-self:flex-start;background:#fff;border:1px solid #e1d7e4;color:#3f3342;border-bottom-left-radius:4px}
+      .lp-chat-msgs{display:flex;flex-direction:column;gap:9px}.lp-chat-msg{display:block;width:max-content;max-width:82%;min-height:0;height:auto;flex:0 0 auto;padding:9px 11px;border-radius:13px;font-size:11px;line-height:1.55;word-break:break-word}
+      .lp-chat-msg.from-customer{align-self:flex-end;background:#6c3f7d;color:#fff;border-bottom-right-radius:4px}.lp-chat-msg.from-admin{align-self:flex-start;background:#fff;border:1px solid #e1d7e4;color:#3f3342;border-bottom-left-radius:4px}
       .lp-chat-msg small{display:block;font-size:7px;opacity:.62;margin-top:4px;text-align:right}.lp-chat-empty{text-align:center;color:#8a7b8f;font-size:10px;padding:36px 15px}
       .lp-chat-compose{border-top:1px solid #eadfec;background:#fff;padding:10px}.lp-chat-compose-row{display:flex;gap:7px}.lp-chat-compose textarea{flex:1;resize:none;min-height:42px;max-height:95px;border:1px solid #d9cbdc;border-radius:10px;padding:10px;font:11px Montserrat,Arial,sans-serif;outline:none}.lp-chat-compose textarea:focus{border-color:#9b78a8}
       .lp-chat-send{width:44px;border:0;border-radius:10px;background:#6c3f7d;color:#fff;cursor:pointer;font-size:17px}.lp-chat-send:disabled{opacity:.45}
@@ -101,7 +101,7 @@
     if(error)throw error;
     const rows=Array.isArray(data)?data:[];
     $('lopheraChatCompose').style.display='block';
-    $('lopheraChatBody').innerHTML=rows.length?'<div class="lp-chat-msgs">'+rows.map(m=>'<div class="lp-chat-msg '+(m.sender==='admin'?'admin':'customer')+'">'+safe(m.body)+'<small>'+time(m.created_at)+'</small></div>').join('')+'</div>':'<div class="lp-chat-empty">Pode mandar sua mensagem 💜<br>Vamos responder por aqui.</div>';
+    $('lopheraChatBody').innerHTML=rows.length?'<div class="lp-chat-msgs">'+rows.map(m=>'<div class="lp-chat-msg '+(m.sender==='admin'?'from-admin':'from-customer')+'">'+safe(m.body)+'<small>'+time(m.created_at)+'</small></div>').join('')+'</div>':'<div class="lp-chat-empty">Pode mandar sua mensagem 💜<br>Vamos responder por aqui.</div>';
     const body=$('lopheraChatBody');body.scrollTop=body.scrollHeight;
   }
   async function send(){
