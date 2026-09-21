@@ -8,7 +8,7 @@ function setStatus(text,error=false){const el=document.getElementById('liveStatu
 async function boot(){
   setStatus('Conectando ao catálogo ao vivo…');
   await Promise.allSettled([maybeRestoreCart(),loadFavoriteState()]);
-  const pr=await supabaseClient.from('products').select('id,name,description,category_id,price,promotional_price,featured,created_at').eq('active',true).order('created_at',{ascending:false});
+  const pr=await supabaseClient.from('products').select('id,name,description,category_id,price,promotional_price,featured,created_at,is_customizable').eq('active',true).order('created_at',{ascending:false});
   if(pr.error){setStatus('Erro ao carregar produtos: '+pr.error.message,true);return}
   products=(pr.data||[]).map(p=>({...p,id:String(p.id),category:'Outros',image:'assets/hero.svg',images:[],variants:[]}));
   renderProducts();updateCart();updateFavoriteCount();if(cart.length)syncCartCloud();
@@ -27,8 +27,28 @@ async function boot(){
 function renderFilters(){const box=document.getElementById('filters');if(!box)return;const names=['Todos',...new Set(products.map(p=>p.category).filter(Boolean))];box.innerHTML=names.map(n=>`<button class="filter ${n===currentFilter?'active':''}" onclick="setFilter('${esc(n)}',this)">${esc(n)}</button>`).join('')}
 function setFilter(f,b){currentFilter=f;document.querySelectorAll('.filter').forEach(x=>x.classList.remove('active'));b?.classList.add('active');renderProducts()}
 function renderProducts(){const g=document.getElementById('productGrid');if(!g)return;const list=products.filter(p=>(currentFilter==='Todos'||p.category===currentFilter)&&String(p.name).toLowerCase().includes(searchTerm.toLowerCase()));g.innerHTML=list.map(card).join('')||'<div class="empty">Nenhum produto encontrado.</div>'}
-function card(p){const price=Number(p.promotional_price||p.price);const old=p.promotional_price?`<span class="old-price">${money(p.price)}</span>`:'';const liked=favoriteIds.has(String(p.id));return`<article class="card"><button class="heart product-heart ${liked?'liked':''}" aria-label="${liked?'Remover dos favoritos':'Adicionar aos favoritos'}" title="${liked?'Remover dos favoritos':'Adicionar aos favoritos'}" onclick="toggleFavorite(event,'${p.id}')">${liked?'♥':'♡'}</button><div class="card-img" onclick="openProduct('${p.id}')"><img src="${esc(p.image)}" alt="${esc(p.name)}" loading="lazy" onerror="this.src='assets/hero.svg'"></div><div class="card-info" onclick="openProduct('${p.id}')"><div class="tag">${esc(p.category)}</div><h3>${esc(shortName(p.name))}</h3><div class="price">${old}${money(price)}</div></div></article>`}
-async function openProduct(id){const p=products.find(x=>x.id===String(id));if(!p)return;const vr=await supabaseClient.from('product_variants').select('id,color,size,stock,sku').eq('product_id',id).eq('active',true).order('id');if(vr.error){alert('Erro ao carregar as opções deste produto: '+vr.error.message);return}p.variants=vr.data||[];p.colors=[...new Set(p.variants.map(v=>v.color).filter(Boolean))];p.sizes=[...new Set(p.variants.map(v=>v.size).filter(Boolean))];const modal=document.getElementById('modal');modal.classList.add('open');document.getElementById('modalBody').innerHTML=`<button class="modal-close" onclick="closeModal()">×</button><div class="modal-img"><img src="${esc(p.image)}" onerror="this.src='assets/hero.svg'"></div><div class="modal-content"><div class="tag">${esc(p.category)}</div><h2>${esc(shortName(p.name))}</h2><div class="price" style="font-size:20px">${p.promotional_price?`<span class="old-price">${money(p.price)}</span>`:''}${money(p.promotional_price||p.price)}</div><p class="desc">${esc(p.description||'Uma peça Lophera pensada para unir estilo, conforto e personalidade.')}</p>${p.colors.length?`<label>Cor</label><div class="option-row" data-kind="color">${p.colors.map((x,i)=>`<button class="option ${i===0?'selected':''}" onclick="pick(this,'color','${p.id}')">${esc(x)}</button>`).join('')}</div>`:''}${p.sizes.length?`<label style="display:block;margin-top:14px">Tamanho</label><div class="option-row" data-kind="size">${p.sizes.map((x,i)=>`<button class="option ${i===0?'selected':''}" onclick="pick(this,'size','${p.id}')">${esc(x)}</button>`).join('')}</div>`:''}<div id="stockState" class="tag" style="margin:14px 0"></div><div class="product-actions"><button class="btn solid" id="addBtn" onclick="addCart('${p.id}')">Adicionar ao carrinho</button><button class="btn favorite-modal-btn" id="favModalBtn" onclick="toggleFavorite(event,'${p.id}')">${favoriteIds.has(String(p.id))?'♥ Favoritado':'♡ Favoritar'}</button></div><div id="productReviews" class="product-reviews"><div class="reviews-loading">Carregando avaliações…</div></div></div>`;refreshVariant(p);loadProductReviews(p.id)}
+function card(p){const price=Number(p.promotional_price||p.price);const old=p.promotional_price?`<span class="old-price">${money(p.price)}</span>`:'';const liked=favoriteIds.has(String(p.id));return`<article class="card">${p.is_customizable?'<span class="custom-card-badge">PERSONALIZE ♡</span>':''}<button class="heart product-heart ${liked?'liked':''}" aria-label="${liked?'Remover dos favoritos':'Adicionar aos favoritos'}" title="${liked?'Remover dos favoritos':'Adicionar aos favoritos'}" onclick="toggleFavorite(event,'${p.id}')">${liked?'♥':'♡'}</button><div class="card-img" onclick="openProduct('${p.id}')"><img src="${esc(p.image)}" alt="${esc(p.name)}" loading="lazy" onerror="this.src='assets/hero.svg'"></div><div class="card-info" onclick="openProduct('${p.id}')"><div class="tag">${esc(p.category)}</div><h3>${esc(shortName(p.name))}</h3><div class="price">${old}${money(price)}</div></div></article>`}
+
+function customizationBlock(p){
+  if(!p.is_customizable)return '';
+  return `<div class="customize-box"><div class="customize-title">🎨 Envie sua estampa</div><p>PNG, JPG ou WEBP · até 8 MB. A imagem fica privada e é usada somente para produzir seu pedido.</p><label class="custom-upload"><span>＋ Escolher imagem</span><input id="customArtFile" type="file" accept="image/png,image/jpeg,image/webp" onchange="uploadCustomArt('${p.id}',this)"></label><div id="customArtStatus" class="custom-art-status">Nenhuma imagem anexada.</div><label class="custom-note-label">Observação para a estampa <small>(opcional)</small><textarea id="customArtNote" maxlength="500" placeholder="Ex.: centralizada, sem fundo, um pouco maior…"></textarea></label></div>`;
+}
+async function uploadCustomArt(id,input){
+  const p=products.find(x=>x.id===String(id)),status=document.getElementById('customArtStatus'),file=input?.files?.[0];
+  if(!p?.is_customizable||!file)return;
+  input.dataset.artPath='';input.dataset.artName='';
+  const okTypes=['image/png','image/jpeg','image/webp'];
+  if(!okTypes.includes(file.type)){status.textContent='Use uma imagem PNG, JPG ou WEBP.';status.classList.add('error');refreshVariant(p);return}
+  if(file.size>8*1024*1024){status.textContent='A imagem precisa ter no máximo 8 MB.';status.classList.add('error');refreshVariant(p);return}
+  const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg';
+  const path='uploads/'+crypto.randomUUID()+'.'+ext;
+  status.classList.remove('error');status.textContent='Enviando sua arte…';
+  const {error}=await supabaseClient.storage.from('custom-artworks').upload(path,file,{cacheControl:'3600',upsert:false,contentType:file.type});
+  if(error){status.textContent='Não foi possível enviar a imagem. Tente novamente.';status.classList.add('error');console.warn('custom art upload',error.message);refreshVariant(p);return}
+  input.dataset.artPath=path;input.dataset.artName=file.name.slice(0,120);
+  status.textContent='✓ '+file.name+' anexada com segurança.';status.classList.remove('error');refreshVariant(p);
+}
+async function openProduct(id){const p=products.find(x=>x.id===String(id));if(!p)return;const vr=await supabaseClient.from('product_variants').select('id,color,size,stock,sku').eq('product_id',id).eq('active',true).order('id');if(vr.error){alert('Erro ao carregar as opções deste produto: '+vr.error.message);return}p.variants=vr.data||[];p.colors=[...new Set(p.variants.map(v=>v.color).filter(Boolean))];p.sizes=[...new Set(p.variants.map(v=>v.size).filter(Boolean))];const modal=document.getElementById('modal');modal.classList.add('open');document.getElementById('modalBody').innerHTML=`<button class="modal-close" onclick="closeModal()">×</button><div class="modal-img"><img id="modalProductImage" src="${esc(p.image)}" onerror="this.src='assets/hero.svg'"></div><div class="modal-content"><div class="tag">${esc(p.category)}${p.is_customizable?' · PERSONALIZÁVEL':''}</div><h2>${esc(shortName(p.name))}</h2><div class="price" style="font-size:20px">${p.promotional_price?`<span class="old-price">${money(p.price)}</span>`:''}${money(p.promotional_price||p.price)}</div><p class="desc">${esc(p.description||'Uma peça Lophera pensada para unir estilo, conforto e personalidade.')}</p>${p.colors.length?`<label>Cor</label><div class="option-row" data-kind="color">${p.colors.map((x,i)=>`<button class="option ${i===0?'selected':''}" onclick="pick(this,'color','${p.id}')">${esc(x)}</button>`).join('')}</div>`:''}${p.sizes.length?`<label style="display:block;margin-top:14px">Tamanho</label><div class="option-row" data-kind="size">${p.sizes.map((x,i)=>`<button class="option ${i===0?'selected':''}" onclick="pick(this,'size','${p.id}')">${esc(x)}</button>`).join('')}</div>`:''}${customizationBlock(p)}<div id="stockState" class="tag" style="margin:14px 0"></div><div class="product-actions"><button class="btn solid" id="addBtn" onclick="addCart('${p.id}')">Adicionar ao carrinho</button><button class="btn favorite-modal-btn" id="favModalBtn" onclick="toggleFavorite(event,'${p.id}')">${favoriteIds.has(String(p.id))?'♥ Favoritado':'♡ Favoritar'}</button></div><div id="productReviews" class="product-reviews"><div class="reviews-loading">Carregando avaliações…</div></div></div>`;refreshVariant(p);loadProductReviews(p.id)}
 async function loadProductReviews(productId){
   const box=document.getElementById('productReviews');if(!box)return;
   const {data,error}=await supabaseClient.rpc('get_product_reviews',{p_product_id:Number(productId)});
@@ -41,11 +61,30 @@ async function loadProductReviews(productId){
 function stars(v){const n=Math.round(Number(v)||0);return '★★★★★'.split('').map((s,i)=>'<span class="'+(i<n?'star-on':'star-off')+'">★</span>').join('')}
 function selected(kind){return document.querySelector(`[data-kind="${kind}"] .selected`)?.textContent?.trim()||''}
 function matchVariant(p){const c=selected('color'),s=selected('size');return p.variants.find(v=>(!c||v.color===c)&&(!s||v.size===s))}
-function refreshVariant(p){const v=matchVariant(p),el=document.getElementById('stockState'),btn=document.getElementById('addBtn');if(el)el.textContent=v?(Number(v.stock)>0?'Disponível':'Indisponível'):'';if(btn)btn.disabled=!v||Number(v.stock)<=0}
+function refreshVariant(p){
+  const v=matchVariant(p),el=document.getElementById('stockState'),btn=document.getElementById('addBtn');
+  if(el)el.textContent=v?(Number(v.stock)>0?'Disponível':'Indisponível'):'';
+  const artReady=!p.is_customizable||!!document.getElementById('customArtFile')?.dataset?.artPath;
+  if(btn){btn.disabled=!v||Number(v.stock)<=0||!artReady;btn.title=p.is_customizable&&!artReady?'Anexe sua estampa para continuar':''}
+  if(p.is_customizable){
+    const color=selected('color'),img=document.getElementById('modalProductImage');
+    const idx=/preto/i.test(color)?1:0;if(img&&p.images?.[idx])img.src=p.images[idx];
+  }
+}
 function pick(el,kind,id){el.parentElement.querySelectorAll('.option').forEach(x=>x.classList.remove('selected'));el.classList.add('selected');const p=products.find(x=>x.id===String(id));if(p)refreshVariant(p)}
-function addCart(id){const p=products.find(x=>x.id===String(id));const v=matchVariant(p);if(!v||Number(v.stock)<=0)return;const key=`${id}|${v.id}`,found=cart.find(x=>x.key===key);if(found)found.qty++;else cart.push({key,id,variant_id:v.id,name:p.name,color:v.color||'',size:v.size||'',price:Number(p.promotional_price||p.price),qty:1,image:p.image});localStorage.setItem('lophera_test_cart',JSON.stringify(cart));updateCart();scheduleCartSync();closeModal()}
+function addCart(id){
+  const p=products.find(x=>x.id===String(id)),v=matchVariant(p);if(!v||Number(v.stock)<=0)return;
+  let artPath='',artName='',artNote='';
+  if(p.is_customizable){
+    const input=document.getElementById('customArtFile');artPath=input?.dataset?.artPath||'';artName=input?.dataset?.artName||'';artNote=document.getElementById('customArtNote')?.value?.trim()?.slice(0,500)||'';
+    if(!artPath){alert('Anexe a imagem da sua estampa antes de adicionar ao carrinho ♡');return}
+  }
+  const key=`${id}|${v.id}|${artPath}`,found=cart.find(x=>x.key===key);
+  if(found)found.qty++;else cart.push({key,id,variant_id:v.id,name:p.name,color:v.color||'',size:v.size||'',price:Number(p.promotional_price||p.price),qty:1,image:p.image,customization_path:artPath||null,customization_filename:artName||null,customization_note:artNote||null});
+  localStorage.setItem('lophera_test_cart',JSON.stringify(cart));updateCart();scheduleCartSync();closeModal()
+}
 function updateCart(){document.querySelectorAll('[data-cart-count]').forEach(e=>e.textContent=cart.reduce((a,x)=>a+x.qty,0))}
-function showCart(){const modal=document.getElementById('cartModal');modal.classList.add('open');const total=cart.reduce((a,x)=>a+x.price*x.qty,0);document.getElementById('cartBody').innerHTML=cart.length?cart.map((x,i)=>`<div style="display:flex;gap:12px;border-bottom:1px solid #eee;padding:14px 0"><img src="${esc(x.image)}" style="width:70px;height:70px;object-fit:cover"><div style="flex:1"><b>${esc(shortName(x.name))}</b><div style="font-size:10px">${esc([x.color,x.size].filter(Boolean).join(' · '))}</div><div>${money(x.price*x.qty)}</div></div><button class="btn" onclick="removeCart(${i})">remover</button></div>`).join('')+`<div style="text-align:right;padding:18px 0;font-size:18px">Total: <b>${money(total)}</b></div>`:'<div class="empty">Seu carrinho está vazio ♡</div>'}
+function showCart(){const modal=document.getElementById('cartModal');modal.classList.add('open');const total=cart.reduce((a,x)=>a+x.price*x.qty,0);document.getElementById('cartBody').innerHTML=cart.length?cart.map((x,i)=>`<div style="display:flex;gap:12px;border-bottom:1px solid #eee;padding:14px 0"><img src="${esc(x.image)}" style="width:70px;height:70px;object-fit:cover"><div style="flex:1"><b>${esc(shortName(x.name))}</b><div style="font-size:10px">${esc([x.color,x.size].filter(Boolean).join(' · '))}</div>${x.customization_path?`<div class="cart-custom-art">🎨 Arte: ${esc(x.customization_filename||'imagem anexada')}${x.customization_note?`<br><span>Obs.: ${esc(x.customization_note)}</span>`:''}</div>`:''}<div>${money(x.price*x.qty)}</div></div><button class="btn" onclick="removeCart(${i})">remover</button></div>`).join('')+`<div style="text-align:right;padding:18px 0;font-size:18px">Total: <b>${money(total)}</b></div>`:'<div class="empty">Seu carrinho está vazio ♡</div>'}
 function removeCart(i){cart.splice(i,1);localStorage.setItem('lophera_test_cart',JSON.stringify(cart));updateCart();scheduleCartSync();showCart()}
 
 function updateFavoriteCount(){document.querySelectorAll('[data-fav-count]').forEach(e=>{e.textContent=favoriteIds.size;e.style.display=favoriteIds.size?'inline-block':'none'})}
@@ -85,7 +124,7 @@ function getCartMeta(){
 function scheduleCartSync(){clearTimeout(cartSyncTimer);cartSyncTimer=setTimeout(()=>syncCartCloud(),250)}
 async function syncCartCloud(retry=true){
   const meta=getCartMeta();
-  const items=cart.map(x=>({product_id:Number(x.id),variant_id:Number(x.variant_id),qty:Number(x.qty||1)}));
+  const items=cart.map(x=>({product_id:Number(x.id),variant_id:Number(x.variant_id),qty:Number(x.qty||1),customization_path:x.customization_path||null,customization_filename:x.customization_filename||null,customization_note:x.customization_note||null}));
   const {data,error}=await supabaseClient.rpc('sync_shopping_cart',{p_cart_id:meta.id,p_client_token:meta.token,p_items:items});
   if(error){
     if(retry&&/finalizado/i.test(error.message||'')){newCartMeta();return syncCartCloud(false)}
@@ -100,7 +139,7 @@ async function maybeRestoreCart(){
   const token=crypto.randomUUID();
   const {data,error}=await supabaseClient.rpc('claim_restored_cart',{p_restore_token:restore,p_new_client_token:token});
   if(error||!data?.cart_id)return;
-  cart=(Array.isArray(data.items)?data.items:[]).map(x=>({key:String(x.product_id)+'|'+String(x.variant_id),id:String(x.product_id),variant_id:Number(x.variant_id),name:x.name||'Produto Lophera',color:x.color||'',size:x.size||'',price:Number(x.price||0),qty:Number(x.qty||1),image:x.image||'assets/hero.svg'}));
+  cart=(Array.isArray(data.items)?data.items:[]).map(x=>({key:String(x.product_id)+'|'+String(x.variant_id)+'|'+String(x.customization_path||''),id:String(x.product_id),variant_id:Number(x.variant_id),name:x.name||'Produto Lophera',color:x.color||'',size:x.size||'',price:Number(x.price||0),qty:Number(x.qty||1),image:x.image||'assets/hero.svg',customization_path:x.customization_path||null,customization_filename:x.customization_filename||null,customization_note:x.customization_note||null}));
   localStorage.setItem('lophera_test_cart',JSON.stringify(cart));
   localStorage.setItem('lophera_cart_meta',JSON.stringify({id:data.cart_id,token,restore_token:data.restore_token}));
   params.delete('restore_cart');history.replaceState({},'',location.pathname+(params.toString()?'?'+params.toString():''));
@@ -108,5 +147,5 @@ async function maybeRestoreCart(){
 }
 function closeModal(){document.getElementById('modal')?.classList.remove('open')}
 function closeCart(){document.getElementById('cartModal')?.classList.remove('open')}
-window.boot=boot;window.setFilter=setFilter;window.openProduct=openProduct;window.loadProductReviews=loadProductReviews;window.pick=pick;window.addCart=addCart;window.showCart=showCart;window.removeCart=removeCart;window.closeModal=closeModal;window.closeCart=closeCart;window.toggleFavorite=toggleFavorite;window.syncCartCloud=syncCartCloud;
+window.boot=boot;window.setFilter=setFilter;window.openProduct=openProduct;window.uploadCustomArt=uploadCustomArt;window.loadProductReviews=loadProductReviews;window.pick=pick;window.addCart=addCart;window.showCart=showCart;window.removeCart=removeCart;window.closeModal=closeModal;window.closeCart=closeCart;window.toggleFavorite=toggleFavorite;window.syncCartCloud=syncCartCloud;
 document.addEventListener('DOMContentLoaded',boot,{once:true});
