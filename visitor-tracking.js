@@ -45,7 +45,7 @@
 (function(){
   function loadLopheraChat(){
     if(document.querySelector('script[data-lophera-chat]'))return;
-    const s=document.createElement('script');s.src='site-chat.js?v=1';s.dataset.lopheraChat='1';document.body.appendChild(s);
+    const s=document.createElement('script');s.src='site-chat.js?v=2';s.dataset.lopheraChat='1';document.body.appendChild(s);
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',loadLopheraChat,{once:true});else loadLopheraChat();
 })();
