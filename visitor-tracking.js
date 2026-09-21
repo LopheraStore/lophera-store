@@ -41,3 +41,11 @@
     try{supabaseClient.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_IN'&&session)identify()})}catch(_){}
   },{once:true});
 })();
+/* Carrega o atendimento em todas as páginas públicas que usam analytics. */
+(function(){
+  function loadLopheraChat(){
+    if(document.querySelector('script[data-lophera-chat]'))return;
+    const s=document.createElement('script');s.src='site-chat.js?v=1';s.dataset.lopheraChat='1';document.body.appendChild(s);
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',loadLopheraChat,{once:true});else loadLopheraChat();
+})();
