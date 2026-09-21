@@ -28,7 +28,7 @@
     if(!body||!cart.length||document.getElementById('mpCheckoutBtn'))return;
     const box=document.createElement('div');
     box.style.marginTop='18px';
-    box.innerHTML=`<button id="mpCheckoutBtn" class="btn solid" style="width:100%" onclick="goCheckout()">Finalizar compra</button><div style="text-align:center;font-size:10px;margin-top:9px;color:#76677a">Dados de envio · frete · resumo · pagamento seguro</div>`;
+    box.innerHTML=`<button id="mpCheckoutBtn" class="btn solid" style="width:100%" onclick="goCheckout()">Finalizar compra</button><button class="btn" style="width:100%;margin-top:8px" onclick="window.lopheraChatShareCart&&window.lopheraChatShareCart()">💬 Enviar carrinho no chat</button><div style="text-align:center;font-size:10px;margin-top:9px;color:#76677a">Dados de envio · frete · resumo · pagamento seguro</div>`;
     body.appendChild(box);
   };
   window.goCheckout=goCheckout;
