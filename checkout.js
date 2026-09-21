@@ -7,7 +7,7 @@ let currentUser=null,selectedShipping=null,shippingQuotes=[],appliedCoupon=null;
 function renderSummary(){
   const box=$('checkoutItems');
   if(!cart.length){box.innerHTML='<div class="empty">Seu carrinho está vazio.</div>';return}
-  box.innerHTML=cart.map(x=>'<div class="checkout-item"><img src="'+safe(x.image||'assets/hero.svg')+'"><div><b>'+safe(x.name)+'</b><small>'+safe([x.color,x.size].filter(Boolean).join(' · '))+' · Qtd. '+Number(x.qty||1)+'</small></div><strong>'+money(Number(x.price||0)*Number(x.qty||1))+'</strong></div>').join('');
+  box.innerHTML=cart.map(x=>'<div class="checkout-item"><img src="'+safe(x.image||'assets/hero.svg')+'"><div><b>'+safe(x.name)+'</b><small>'+safe([x.color,x.size].filter(Boolean).join(' · '))+' · Qtd. '+Number(x.qty||1)+(x.customization_path?'<br>🎨 Arte: '+safe(x.customization_filename||'imagem anexada')+(x.customization_note?'<br>Obs.: '+safe(x.customization_note):''):'')+'</small></div><strong>'+money(Number(x.price||0)*Number(x.qty||1))+'</strong></div>').join('');
   const subtotal=cart.reduce((a,x)=>a+Number(x.price||0)*Number(x.qty||1),0);
   $('checkoutSubtotal').textContent=money(subtotal);updateTotals();
 }
@@ -140,7 +140,7 @@ async function finalize(e){
     const {error:pe}=await supabaseClient.from('customer_profiles').upsert(profile,{onConflict:'user_id'});
     if(pe)throw pe;
     if(!selectedShipping)throw new Error('Escolha uma opção de frete antes de continuar.');
-    const items=cart.map(x=>({product_id:x.id,variant_id:x.variant_id,quantity:x.qty}));
+    const items=cart.map(x=>({product_id:x.id,variant_id:x.variant_id,quantity:x.qty,customization_path:x.customization_path||null,customization_filename:x.customization_filename||null,customization_note:x.customization_note||null}));
     let cartId=null;
     try{
       const meta=JSON.parse(localStorage.getItem('lophera_cart_meta')||'null');
