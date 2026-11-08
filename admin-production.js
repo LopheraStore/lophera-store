@@ -33,7 +33,7 @@ function loadStudioAccess(){
   e.preventDefault();const msg=form.querySelector('.form-msg');msg.textContent='Enviando convite...';
   const {data,error}=await supabaseClient.functions.invoke('studio-invite-staff',{body:{email:form.elements.email.value.trim(),role:'production'}});
   if(error||!data?.ok){const detail=data?.error||data?.message||error?.context?.message||error?.message||'Falha desconhecida';msg.textContent='Convite não enviado: '+detail+'. Se o e-mail já tem conta, pode ser necessário conceder acesso à conta existente.';return}
-  msg.textContent='Convite enviado para '+data.email;form.reset();await listStudioStaff();
+  msg.textContent=data.existing_account?'Acesso à produção liberado para a conta existente: '+data.email:'Convite enviado para '+data.email;form.reset();await listStudioStaff();
  };
 }
 
