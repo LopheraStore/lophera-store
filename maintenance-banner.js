@@ -4,7 +4,7 @@
  if(error||data?.content?.maintenance?.enabled!==true)return;
  // Apenas administradores autenticados podem visualizar a loja sem o aviso.
  const {data:auth}=await supabaseClient.auth.getUser();
- if(auth?.user){const {data:admin}=await supabaseClient.rpc('is_admin');if(admin===true)return}
+ if(auth?.user){const {data:admin}=await supabaseClient.rpc('is_admin');if(admin===true&&auth.user.email?.toLowerCase()==='lopherastore@gmail.com')return}
  const overlay=document.createElement('div');overlay.id='lopheraMaintenanceNotice';
  overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');
  Object.assign(overlay.style,{position:'fixed',inset:'0',zIndex:'2147483647',background:'#17101f',color:'#fff',display:'grid',placeItems:'center',padding:'24px',textAlign:'center'});
