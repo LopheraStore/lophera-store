@@ -66,7 +66,7 @@
     $('emailEnabled').checked=!!s.enabled;
     const providerLabel=s.provider==='gmail_oauth'?'Google / Gmail':s.provider==='gmail'?'Gmail (senha de app)':'Resend';
     $('emailStatus').innerHTML='<b>Status:</b> '+(s.enabled?'ativo':'desativado')+' · provedor '+providerLabel+' · credencial '+(data?.api_key_saved?'salva':'não configurada')+' · enviados '+Number(data?.sent_count||0)+' · falhas '+Number(data?.failed_count||0);
-    loadGoogleGmailStatus();
+    if(s.enabled&&!data?.api_key_saved){$('emailStatus').textContent+=' · ATENÇÃO: envio habilitado sem credencial do provedor selecionado.';}else if(!s.enabled){$('emailStatus').textContent+=' · Envios desativados; configure e valide o provedor antes de habilitar.';}\n    loadGoogleGmailStatus();
   };
   window.saveEmailSettings=async function(){
     const msg=$('emailMsg');msg.textContent='Salvando…';
