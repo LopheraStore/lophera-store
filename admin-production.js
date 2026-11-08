@@ -27,6 +27,7 @@ async function loadProduction(){
 function loadStudioAccess(){
  const el=document.getElementById('studioAccessInfo');if(!el)return;
  el.innerHTML='<p>Convide um colaborador para a equipe de produção. O acesso às demais funções do Estúdio continua restrito aos administradores.</p><form class="form" id="staffInviteForm"><label>E-mail do colaborador<input type="email" name="email" required autocomplete="off"></label><button class="btn solid" type="submit">Enviar convite</button><p class="form-msg" aria-live="polite"></p></form>';
+ const list=document.createElement('div');list.id='studioStaffList';el.append(list);listStudioStaff();
  const form=document.getElementById('staffInviteForm');
  form.onsubmit=async e=>{
   e.preventDefault();const msg=form.querySelector('.form-msg');msg.textContent='Enviando convite...';
