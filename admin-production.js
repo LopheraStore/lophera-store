@@ -32,4 +32,14 @@ async function advanceProduction(id,current,next,exists){
  if(error){alert('Não foi possível atualizar: '+error.message);return}
  await loadProduction();
 }
-function loadStudioAccess(){const el=document.getElementById('studioAccessInfo');if(el)el.textContent='Convites e permissões estão em preparação. Nenhum acesso será criado sem uma função segura no servidor e autorização de administrador.';}
+function loadStudioAccess(){
+ const el=document.getElementById('studioAccessInfo');if(!el)return;
+ el.innerHTML='<p>Convide um colaborador para a equipe de produção. O acesso às demais funções do Estúdio continua restrito aos administradores.</p><form class="form" id="staffInviteForm"><label>E-mail do colaborador<input type="email" name="email" required autocomplete="off"></label><button class="btn solid" type="submit">Enviar convite</button><p class="form-msg" aria-live="polite"></p></form>';
+ const form=document.getElementById('staffInviteForm');
+ form.onsubmit=async e=>{
+  e.preventDefault();const msg=form.querySelector('.form-msg');msg.textContent='Enviando convite...';
+  const {data,error}=await supabaseClient.functions.invoke('studio-invite-staff',{body:{email:form.elements.email.value.trim(),role:'production'}});
+  if(error||!data?.ok){msg.textContent='Não foi possível enviar o convite. Confira o e-mail e tente novamente.';return}
+  msg.textContent='Convite enviado para '+data.email;form.reset();
+ };
+}
