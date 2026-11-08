@@ -1,6 +1,8 @@
 /* Lophera Studio V7.8 — e-mails transacionais */
 (function(){
-  const $=id=>document.getElementById(id);\n  function feedback(el,message){if(!el)return;el.textContent=message;el.style.cssText='display:block;margin:12px 0;padding:12px;border:1px solid #a77acb;border-radius:9px;background:#f7efff;color:#28113b;white-space:pre-wrap';el.scrollIntoView({behavior:'smooth',block:'nearest'});}\n  function readableError(error){return error?.message||'Falha desconhecida. Verifique sua sessão e tente novamente.';}
+  const $=id=>document.getElementById(id);
+  function feedback(el,message){if(!el)return;el.textContent=message;el.style.cssText='display:block;margin:12px 0;padding:12px;border:1px solid #a77acb;border-radius:9px;background:#f7efff;color:#28113b;white-space:pre-wrap';el.scrollIntoView({behavior:'smooth',block:'nearest'});}
+  function readableError(error){return error?.message||'Falha desconhecida. Verifique sua sessão e tente novamente.';}
   function ensure(){
     if($('tab-email')) return;
     const side=document.querySelector('.v3-sidebar'),main=document.querySelector('.v3-main'); if(!side||!main) return;
@@ -66,7 +68,8 @@
     $('emailEnabled').checked=!!s.enabled;
     const providerLabel=s.provider==='gmail_oauth'?'Google / Gmail':s.provider==='gmail'?'Gmail (senha de app)':'Resend';
     $('emailStatus').innerHTML='<b>Status:</b> '+(s.enabled?'ativo':'desativado')+' · provedor '+providerLabel+' · credencial '+(data?.api_key_saved?'salva':'não configurada')+' · enviados '+Number(data?.sent_count||0)+' · falhas '+Number(data?.failed_count||0);
-    if(s.enabled&&!data?.api_key_saved){$('emailStatus').textContent+=' · ATENÇÃO: envio habilitado sem credencial do provedor selecionado.';}else if(!s.enabled){$('emailStatus').textContent+=' · Envios desativados; configure e valide o provedor antes de habilitar.';}\n    loadGoogleGmailStatus();
+    if(s.enabled&&!data?.api_key_saved){$('emailStatus').textContent+=' · ATENÇÃO: envio habilitado sem credencial do provedor selecionado.';}else if(!s.enabled){$('emailStatus').textContent+=' · Envios desativados; configure e valide o provedor antes de habilitar.';}
+    loadGoogleGmailStatus();
   };
   window.saveEmailSettings=async function(){
     const msg=$('emailMsg');feedback(msg,'Salvando configurações...');
