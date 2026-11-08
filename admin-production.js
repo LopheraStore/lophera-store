@@ -40,6 +40,32 @@ function loadStudioAccess(){
   e.preventDefault();const msg=form.querySelector('.form-msg');msg.textContent='Enviando convite...';
   const {data,error}=await supabaseClient.functions.invoke('studio-invite-staff',{body:{email:form.elements.email.value.trim(),role:'production'}});
   if(error||!data?.ok){msg.textContent='Não foi possível enviar o convite. Confira o e-mail e tente novamente.';return}
-  msg.textContent='Convite enviado para '+data.email;form.reset();
+  msg.textContent='Convite enviado para '+data.email;form.reset();await listStudioStaff();
  };
+}
+
+async function listStudioStaff(){
+ const root=document.getElementById('studioStaffList');if(!root)return;
+ root.textContent='Carregando equipe...';
+ const {data,error}=await supabaseClient.functions.invoke('studio-manage-staff',{body:{action:'list'}});
+ if(error||!Array.isArray(data?.users)){root.textContent='Não foi possível consultar os acessos.';return}
+ root.replaceChildren();
+ const heading=document.createElement('h3');heading.textContent='Acessos da equipe';root.append(heading);
+ if(!data.users.length){const p=document.createElement('p');p.textContent='Nenhum funcionário convidado ainda.';root.append(p);return}
+ for(const u of data.users){
+  const row=document.createElement('div');row.className='setting-card';row.style.marginBottom='12px';
+  const label=document.createElement('p');label.textContent=u.email+' · '+(u.role==='production'?'Produção':u.role)+' · '+(u.active?'Ativo':'Desativado');row.append(label);
+  if(u.role==='production'){
+   const button=document.createElement('button');button.className='btn';button.textContent=u.active?'Desativar acesso':'Reativar acesso';
+   button.onclick=async()=>{
+    if(!confirm((u.active?'Desativar':'Reativar')+' o acesso de '+u.email+'?'))return;
+    button.disabled=true;
+    const {data:result,error:err}=await supabaseClient.functions.invoke('studio-manage-staff',{body:{action:'set_active',user_id:u.user_id,active:!u.active}});
+    if(err||!result?.ok){alert('Não foi possível alterar o acesso.');button.disabled=false;return}
+    await listStudioStaff();
+   };
+   row.append(button);
+  }
+  root.append(row);
+ }
 }
