@@ -1,6 +1,6 @@
 /* Lophera Studio V7.8 — e-mails transacionais */
 (function(){
-  const $=id=>document.getElementById(id);
+  const $=id=>document.getElementById(id);\n  function feedback(el,message){if(!el)return;el.textContent=message;el.style.cssText='display:block;margin:12px 0;padding:12px;border:1px solid #a77acb;border-radius:9px;background:#f7efff;color:#28113b;white-space:pre-wrap';el.scrollIntoView({behavior:'smooth',block:'nearest'});}\n  function readableError(error){return error?.message||'Falha desconhecida. Verifique sua sessão e tente novamente.';}
   function ensure(){
     if($('tab-email')) return;
     const side=document.querySelector('.v3-sidebar'),main=document.querySelector('.v3-main'); if(!side||!main) return;
@@ -69,7 +69,7 @@
     if(s.enabled&&!data?.api_key_saved){$('emailStatus').textContent+=' · ATENÇÃO: envio habilitado sem credencial do provedor selecionado.';}else if(!s.enabled){$('emailStatus').textContent+=' · Envios desativados; configure e valide o provedor antes de habilitar.';}\n    loadGoogleGmailStatus();
   };
   window.saveEmailSettings=async function(){
-    const msg=$('emailMsg');msg.textContent='Salvando…';
+    const msg=$('emailMsg');feedback(msg,'Salvando configurações...');
     const {error}=await supabaseClient.rpc('admin_save_email_settings_v2',{
       p_enabled:$('emailEnabled').checked,
       p_provider:$('emailProvider').value,
@@ -77,7 +77,7 @@
       p_from_name:$('emailFromName').value.trim(),
       p_reply_to:$('emailReplyTo').value.trim()
     });
-    msg.textContent=error?error.message:'Configurações de e-mail salvas ♡';
+    feedback(msg,error?readableError(error):'Configurações de e-mail salvas ♡');
     if(!error) loadEmailSettings();
   };
   window.loadGoogleGmailStatus=async function(){
@@ -95,31 +95,31 @@
   };
   window.saveGoogleOAuthCredentials=async function(){
     const msg=$('emailMsg'),clientId=$('googleClientId').value.trim(),secret=$('googleClientSecret').value.trim();
-    if(!clientId||!secret){msg.textContent='Preencha Client ID e Client Secret do Google.';return}
-    msg.textContent='Salvando credenciais do Google…';
+    if(!clientId||!secret){feedback(msg,'Para usar Conectar com Google, é preciso criar credenciais OAuth no Google Cloud. Não são seu e-mail e senha.');return}
+    feedback(msg,'Salvando credenciais do Google...');
     const {error}=await supabaseClient.rpc('set_google_oauth_credentials',{p_client_id:clientId,p_client_secret:secret});
-    msg.textContent=error?error.message:'App Google salvo com segurança ♡';
+    feedback(msg,error?readableError(error):'App Google salvo com segurança ♡');
     if(!error){$('googleClientId').value='';$('googleClientSecret').value='';loadGoogleGmailStatus()}
   };
   window.connectGoogleGmail=async function(){
-    const msg=$('emailMsg');msg.textContent='Abrindo conexão segura com o Google…';
+    const msg=$('emailMsg');feedback(msg,'Iniciando conexão segura com o Google...');
     const {data,error}=await supabaseClient.functions.invoke('google-gmail-oauth-start',{body:{}});
-    if(error){msg.textContent=error.message;return}
-    if(!data?.ok||!data?.authorization_url){msg.textContent=data?.error||'Não foi possível iniciar a conexão.';return}
+    if(error){feedback(msg,'Não foi possível iniciar a conexão: '+readableError(error));return}
+    if(!data?.ok||!data?.authorization_url){feedback(msg,data?.error||'Não foi possível iniciar a conexão. Verifique o Client ID e o Client Secret.');return}
     location.href=data.authorization_url;
   };
   window.saveGmailPassword=async function(){
     const key=$('gmailAppPassword').value.trim(),msg=$('emailMsg');
-    if(!key){msg.textContent='Cole a senha de app do Gmail.';return}
+    if(!key){feedback(msg,'Informe uma senha de app do Google, não sua senha normal do Gmail.');return}
     const {error}=await supabaseClient.rpc('set_gmail_app_password',{p_key:key});
-    msg.textContent=error?error.message:'Gmail conectado com segurança ♡';
+    feedback(msg,error?readableError(error):'Credencial do Gmail salva. Falta testar um envio para confirmar a conexão.');
     if(!error){$('gmailAppPassword').value='';loadEmailSettings()}
   };
   window.saveResendKey=async function(){
     const key=$('resendApiKey').value.trim(),msg=$('emailMsg');
     if(!key){msg.textContent='Cole a chave da Resend.';return}
     const {error}=await supabaseClient.rpc('set_resend_api_key',{p_key:key});
-    msg.textContent=error?error.message:'Chave salva com segurança ♡';
+    feedback(msg,error?readableError(error):'Chave salva. Falta testar um envio.');
     if(!error){$('resendApiKey').value='';loadEmailSettings()}
   };
   window.sendOrderUpdateEmail=async function(orderId){
